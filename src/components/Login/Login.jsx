@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -49,6 +51,8 @@ const Login = () => {
     if (validateForm()) {
       // TODO: 实现登录/注册逻辑
       console.log('表单提交', formData);
+      // 登录成功后跳转到Welcome页面
+      navigate('/welcome');
     }
   };
 
