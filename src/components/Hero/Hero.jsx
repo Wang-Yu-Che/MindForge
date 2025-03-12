@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Hero.css';
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="hero">
       <div className="hero-content">
@@ -12,7 +15,7 @@ const Hero = () => {
         <p className="hero-subtitle">
           基于 Ollama 打造的一款出色的工具，可助您理解您最为关心的信息
         </p>
-        <button className="try-button">
+        <button className="try-button" onClick={() => navigate('/login')}>
           试用 MindForge
         </button>
       </div>

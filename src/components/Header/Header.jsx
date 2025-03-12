@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink, Link } from 'react-router-dom';
 import './Header.css';
 
 const Header = () => {
@@ -7,17 +8,17 @@ const Header = () => {
       <div className="header-container">
         {/* 左侧Logo */}
         <div className="header-left">
-          <a href="/" className="logo">
+          <Link to="/" className="logo">
             <img src="/logo.svg" alt="MindForge" />
             <span>MindForge</span>
-          </a>
+          </Link>
         </div>
         
         {/* 右侧导航 */}
         <div className="header-right">
           <nav className="nav-links">
-            <a href="/overview">概览</a>
-            <a href="/plus">登录</a>
+            <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''} end>概览</NavLink>
+            <NavLink to="/login" className={({ isActive }) => isActive ? 'active' : ''}>登录</NavLink>
           </nav>
         </div>
       </div>
@@ -25,4 +26,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;
