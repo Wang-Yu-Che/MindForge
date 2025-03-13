@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import './Header.css';
+import Feedback from '../Feedback/Feedback';
 
 const Header = () => {
   const location = useLocation();
   const isWelcomePage = location.pathname === '/welcome';
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const settingsRef = useRef(null);
 
   useEffect(() => {
@@ -26,8 +28,8 @@ const Header = () => {
   };
 
   const handleFeedback = () => {
-    // 处理发送反馈的逻辑
-    console.log('发送反馈');
+    setIsFeedbackOpen(true);
+    setIsSettingsOpen(false);
   };
 
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
@@ -103,6 +105,12 @@ const Header = () => {
           </nav>
         </div>
       </div>
+      {isFeedbackOpen && (
+        <Feedback
+          isOpen={isFeedbackOpen}
+          onClose={() => setIsFeedbackOpen(false)}
+        />
+      )}
     </header>
   );
 };
