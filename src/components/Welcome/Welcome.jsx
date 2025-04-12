@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineCloudUpload, AiOutlineTeam, AiOutlineSafety } from 'react-icons/ai';
+import { Layout, Grid, Typography, Button, Space } from '@arco-design/web-react';
+import '@arco-design/web-react/dist/css/arco.css';
 import './Welcome.css';
 
 const Welcome = () => {
@@ -12,47 +14,55 @@ const Welcome = () => {
   };
 
   return (
-    <div className="welcome-container">
-      <div className="welcome-content">
-        <h1 className="welcome-title">欢迎来到 MindForge</h1>
+    <Layout className="welcome-container">
+      <Layout.Content className="welcome-content">
+        <Typography.Title heading={1}>欢迎来到 MindForge</Typography.Title>
 
         <div className="welcome-card">
-          <div className="welcome-header-content">
-            <p className="welcome-subtitle">创建你的第一个笔记本</p>
-            <p className="welcome-description">MindForge 是一款人工智能研究和写作助手，可以与您上传的资料完美配合</p>
-          </div>
-          <div className="features-grid">
-            <div className="feature-item">
-              <div className="feature-icon">
-                <AiOutlineCloudUpload />
-              </div>
-              <h3 className="feature-title">上传你的文档</h3>
-              <p className="feature-description">MindForge 将自动评估和理解您的文档内容并生成笔记</p>
-            </div>
+          <Space direction="vertical" size={8}>
+            <Typography.Title heading={3} style={{ margin: 0 }}>创建你的第一个笔记本</Typography.Title>
+            <Typography.Text type="secondary">MindForge 是一款人工智能研究和写作助手，可以与您上传的资料完美配合</Typography.Text>
+          </Space>
+          
+          <Grid.Row className="features-grid" gutter={24}>
+            <Grid.Col span={8}>
+              <Space direction="vertical" className="feature-item">
+                <div className="feature-icon">
+                  <AiOutlineCloudUpload size={24} />
+                </div>
+                <Typography.Title heading={5}>上传你的文档</Typography.Title>
+                <Typography.Text type="secondary">MindForge 将自动评估和理解您的文档内容并生成笔记</Typography.Text>
+              </Space>
+            </Grid.Col>
 
-            <div className="feature-item">
-              <div className="feature-icon">
-                <AiOutlineTeam />
-              </div>
-              <h3 className="feature-title">协同合作</h3>
-              <p className="feature-description">你可以与团队成员共享笔记本，实现高效协作</p>
-            </div>
+            <Grid.Col span={8}>
+              <Space direction="vertical" className="feature-item">
+                <div className="feature-icon">
+                  <AiOutlineTeam size={24} />
+                </div>
+                <Typography.Title heading={5}>协同合作</Typography.Title>
+                <Typography.Text type="secondary">你可以与团队成员共享笔记本，实现高效协作</Typography.Text>
+              </Space>
+            </Grid.Col>
 
-            <div className="feature-item">
-              <div className="feature-icon">
-                <AiOutlineSafety />
-              </div>
-              <h3 className="feature-title">安全可靠</h3>
-              <p className="feature-description">所有数据都经过加密存储，确保你的信息安全</p>
-            </div>
-          </div>
-          <div className="welcome-actions">
-          <button className="create-button">创建</button>
-          <span onClick={handleDemoClick} className="demo-link">尝试示例笔记本</span>
-          </div>
+            <Grid.Col span={8}>
+              <Space direction="vertical" className="feature-item">
+                <div className="feature-icon">
+                  <AiOutlineSafety size={24} />
+                </div>
+                <Typography.Title heading={5}>安全可靠</Typography.Title>
+                <Typography.Text type="secondary">所有数据都经过加密存储，确保你的信息安全</Typography.Text>
+              </Space>
+            </Grid.Col>
+          </Grid.Row>
+          
+          <Space direction="vertical" size={8} className="welcome-actions">
+            <Button type="primary" size="large">创建</Button>
+            <Button type="text" onClick={handleDemoClick}>尝试示例笔记本</Button>
+          </Space>
         </div>
-      </div>
-    </div>
+      </Layout.Content>
+    </Layout>
   );
 };
 
