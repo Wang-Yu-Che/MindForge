@@ -13,4 +13,4 @@ const AnswerFeature = () => (
   </FeatureSection>
 );
 
-export default AnswerFeature; 
+export default AnswerFeature;

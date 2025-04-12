@@ -13,4 +13,4 @@ const UploadFeature = () => (
   </FeatureSection>
 );
 
-export default UploadFeature; 
+export default UploadFeature;

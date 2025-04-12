@@ -14,4 +14,4 @@ const GuideFeature = () => (
   </FeatureSection>
 );
 
-export default GuideFeature; 
+export default GuideFeature;
