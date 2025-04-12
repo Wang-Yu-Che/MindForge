@@ -1,0 +1,119 @@
+.demo-notebook-layout {
+    height: 100vh;
+    padding-top: 64px;
+    background-color: #f7f8fa;
+    overflow: hidden;
+  }
+  
+  /* 左右面板通用样式 */
+  .sider-panel,
+  .right-panel {
+    background-color: #ffffff;
+    border-radius: 12px;
+    margin: 16px 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .sider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .sider-search {
+    margin-bottom: 12px;
+  }
+
+  
+  .source-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+  }
+  
+  .source-item {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .source-item:hover {
+    background-color: #f2f3f5;
+  }
+  
+  .source-item.active {
+    background-color: #eaf0ff;
+    font-weight: 600;
+  }
+  
+  /* 中间聊天区域 */
+  .content-panel {
+    background-color: #ffffff;
+    border-radius: 12px;
+    margin: 16px 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    overflow: auto;
+  }
+  
+  .chat-area {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .chat-intro {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px 16px;
+    line-height: 1.6;
+  }
+  
+  .chat-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  /* 输入框 */
+  textarea,
+  .arco-input-textarea {
+    border-radius: 8px !important;
+    background-color: #ffffff;
+  }
+  
+  /* 笔记按钮布局 */
+  .note-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+  
+  .note-buttons button {
+    width: 100%;
+    height: 32px;
+    font-size: 14px;
+    padding: 0 12px;
+  }
+  
+  /* 响应式支持 */
+  @media (max-width: 768px) {
+    .sider-panel,
+    .content-panel,
+    .right-panel {
+      margin: 8px;
+    }
+  }
+  

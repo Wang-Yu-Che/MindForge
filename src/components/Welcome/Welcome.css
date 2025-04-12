@@ -1,188 +1,52 @@
 .welcome-container {
-  height: calc(100vh - 64px);
-  margin-top: 64px;
-  background: var(--color-fill-2);
-  padding: 32px 16px;
-  overflow: hidden;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f0ff 0%, #f9f1ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
 }
 
 .welcome-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.welcome-card {
-  background: var(--color-bg-2);
-  border-radius: var(--border-radius-large);
-  padding: 24px;
-  box-shadow: 0 4px 10px var(--color-shadow-1);
+  max-width: 900px;
   width: 100%;
-}
-
-.features-grid {
-  margin: 32px 0;
-}
-
-.feature-item {
-  padding: 16px;
   text-align: center;
-}
-
-.feature-icon {
-  color: var(--color-primary-6);
-  margin-bottom: 16px;
-}
-
-.welcome-actions {
-  margin-top: 24px;
-}
-
-@media (max-width: 768px) {
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .welcome-title {
-    font-size: 24px;
-  }
-  
-  .welcome-subtitle {
-    font-size: 16px;
-  }
-}
-
-.try-demo {
-  color: #1a73e8;
-  text-decoration: none;
-  font-size: 16px;
-  transition: color 0.2s ease;
-}
-
-.try-demo:hover {
-  color: #1557b0;
-  text-decoration: underline;
-}
-
-.welcome-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 64px;
-}
-
-.welcome-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: #000000;
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.welcome-logo img {
-  height: 28px;
-  margin-right: 8px;
-}
-
-.settings-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  color: #5f6368;
-  transition: color 0.2s ease;
-}
-
-.settings-button:hover {
-  color: #000000;
 }
 
 .welcome-title {
   font-size: 32px;
-  font-weight: 300;
-  margin-bottom: 32px;
-  text-align: left;
-  background: linear-gradient(45deg, #1a73e8, #34a853);
+  background: linear-gradient(to right, #4f8df9, #8e6be8);
   -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 24px;
 }
 
-.welcome-subtitle {
-  font-size: 16px;
-  color: #5f6368;
-  margin-bottom: 24px;
-  text-align: center;
+.welcome-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 16px auto 24px;
-  max-width: 900px;
+  margin-top: 32px;
+  margin-bottom: 32px;
 }
 
 .feature-item {
-  background: white;
-  padding: 8px 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+  align-items: center;
+  text-align: center;
 }
 
-.feature-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #202124;
-  margin-bottom: 2px;
+.feature-icon {
+  background-color: #f0f4ff;
+  border-radius: 50%;
+  padding: 16px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.feature-description {
-  font-size: 12px;
-  color: #5f6368;
-  line-height: 1.2;
-}
-
-.create-button {
-  background-color: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 32px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.create-button:hover {
-  background-color: #1557b0;
-}
-
-@media (max-width: 768px) {
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .welcome-title {
-    font-size: 28px;
-  }
-  
-  .welcome-subtitle {
-    font-size: 16px;
-  }
-}
-
-.demo-link {
-  color: #4a90e2;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.demo-link:hover {
-  text-decoration: underline;
+.welcome-actions {
+  margin-top: 16px;
 }
