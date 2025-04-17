@@ -12,6 +12,10 @@ const Welcome = () => {
     navigate('/demo-notebook');
   };
 
+  const handleCreateClick = () => {
+    navigate('/demo-notebook', { state: { showUploadModal: true } });
+  };
+
   return (
     <Layout className="welcome-container">
       <Layout.Content className="welcome-content">
@@ -48,7 +52,7 @@ const Welcome = () => {
           </Grid.Row>
 
           <Space direction="vertical" size={8} className="welcome-actions">
-            <Button type="primary" size="large">创建</Button>
+            <Button type="primary" size="large" onClick={handleCreateClick}>创建</Button>
             <Button type="text" onClick={handleDemoClick}>尝试示例笔记本</Button>
           </Space>
         </div>

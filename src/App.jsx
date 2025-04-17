@@ -10,6 +10,7 @@ import AnswerFeature from './components/App/Features/AnswerFeature';
 import ConversationFeature from './components/App/Features/ConversationFeature';
 import Features from './components/App/Features/Features';
 import DemoNotebook from './components/DemoNote/DemoNote'
+import NoteBookList from './components/NoteBookList/NotebookList';
 import './App.css';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/demo-notebook" element={<DemoNotebook />} />
+          <Route path="/note-book-list" element={<NoteBookList />} />
         </Routes>
       </div>
     </Router>

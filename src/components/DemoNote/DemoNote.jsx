@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Layout,
   Button,
@@ -14,12 +15,14 @@ import {
   IconSend
 } from '@arco-design/web-react/icon';
 import './DemoNote.css';
-import { Message } from '@arco-design/web-react';
+
+import { Message, Modal } from '@arco-design/web-react';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
 const DemoNotebook = () => {
+  const { state } = useLocation();
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [messages, setMessages] = useState([
@@ -33,19 +36,19 @@ const DemoNotebook = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [conversationId] = useState(Date.now().toString());
-  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [uploadModalVisible, setUploadModalVisible] = useState(state?.showUploadModal || false);
+
+  useEffect(() => {
+    if (state?.showUploadModal) {
+      setUploadModalVisible(true);
+    }
+  }, [state]);
 
   const toggleLeftPanel = () => setLeftCollapsed(!leftCollapsed);
   const toggleRightPanel = () => setRightCollapsed(!rightCollapsed);
 
   const sources = [
-    { icon: '📘', label: 'MindForge 入门' },
-    { icon: '📄', label: 'MindForge 功能' },
-    { icon: '📘', label: 'MindForge 词汇表' },
-    { icon: '📘', label: 'MindForge 故障排除' },
-    { icon: '📘', label: '使用 MindForge 作为帮助中心或共享知识库' },
-    { icon: '📘', label: '使用 MindForge 进行研究' },
-    { icon: '📘', label: '使用 MindForge 记录会议' },
+
   ];
 
   const notes = [
@@ -162,7 +165,11 @@ const DemoNotebook = () => {
                 <>
                   <IconPlus style={{ fontSize: 32, marginBottom: 16 }} />
                   <Typography.Text>添加源以开始</Typography.Text>
-                  <Button type="primary" style={{ marginTop: 16 }} onClick={() => setUploadModalVisible(true)}>
+                  <Button 
+                    type="primary" 
+                    style={{ marginTop: 16 }}
+                    onClick={() => setUploadModalVisible(true)}
+                  >
                     上传源
                   </Button>
                 </>
@@ -243,6 +250,15 @@ const DemoNotebook = () => {
               className="send-button"
             />
           </div>
+          
+          <Modal
+            title="上传源"
+            visible={uploadModalVisible}
+            onOk={() => setUploadModalVisible(false)}
+            onCancel={() => setUploadModalVisible(false)}
+          >
+            <p>请选择要上传的文件</p>
+          </Modal>
         </div>
       </Content>
 

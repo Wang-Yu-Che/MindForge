@@ -33,6 +33,8 @@ const Header = () => {
   };
 
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const avatarRef = useRef(null);
 
   const handleThemeSettings = () => {
     setIsThemeMenuOpen(!isThemeMenuOpen);
@@ -43,6 +45,35 @@ const Header = () => {
     console.log('切换主题：', theme);
     setIsThemeMenuOpen(false);
   };
+
+  const handleAvatarClick = () => {
+    setIsAvatarMenuOpen(!isAvatarMenuOpen);
+  };
+
+  const handleChangeAvatar = () => {
+    // 处理更换头像的逻辑
+    console.log('更换头像');
+    setIsAvatarMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    // 处理退出登录的逻辑
+    console.log('退出登录');
+    setIsAvatarMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (avatarRef.current && !avatarRef.current.contains(event.target)) {
+        setIsAvatarMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="header">
@@ -92,8 +123,20 @@ const Header = () => {
                     </div>
                   </div>
                 </div>
-                <div className="user-avatar">
-                  <img src="/default-avatar.png" alt="用户头像" />
+                <div ref={avatarRef} style={{ position: 'relative' }}>
+                  <div className="user-avatar" onClick={handleAvatarClick}>
+                    <img src="/default-avatar.png" alt="用户头像" />
+                  </div>
+                  <div className={`settings-menu ${isAvatarMenuOpen ? 'active' : ''}`}>
+                    <div className="settings-menu-item" onClick={handleChangeAvatar}>
+                      <i className="fas fa-user-edit"></i>
+                      更换头像
+                    </div>
+                    <div className="settings-menu-item" onClick={handleLogout}>
+                      <i className="fas fa-sign-out-alt"></i>
+                      退出登录
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (

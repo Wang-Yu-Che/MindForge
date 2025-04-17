@@ -1,0 +1,50 @@
+.notebook-list-layout {
+  padding-top: 64px;
+  background-color: #f7f8fa;
+  min-height: 100vh;
+}
+
+.notebook-list-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.notebook-card-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+  }
+  
+  .notebook-card {
+    border-radius: 16px;
+    background: linear-gradient(to right, #e3d7f4, #c9bedf);
+    padding: 20px;
+    position: relative;
+  }
+  
+  .notebook-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .notebook-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  
+  .notebook-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 16px;
+  }
+  
+  .notebook-card-sub {
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+  }
+  
