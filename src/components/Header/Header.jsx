@@ -5,7 +5,7 @@ import Feedback from '../Feedback/Feedback';
 
 const Header = () => {
   const location = useLocation();
-  const isWelcomePage = location.pathname === '/welcome';
+  const isWelcomePage = !['/', '/login'].includes(location.pathname);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const settingsRef = useRef(null);
@@ -127,7 +127,7 @@ const Header = () => {
                 </div>
                 <div ref={avatarRef} style={{ position: 'relative' }}>
                   <div className="user-avatar" onClick={handleAvatarClick}>
-                    <img src="/default-avatar.png" alt="用户头像" />
+                    <img src="/default-avatar.svg" alt="用户头像" />
                   </div>
                   <div className={`settings-menu ${isAvatarMenuOpen ? 'active' : ''}`}>
                     <div className="settings-menu-item" onClick={handleChangeAvatar}>

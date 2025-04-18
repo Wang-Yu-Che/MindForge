@@ -5,6 +5,7 @@ const Feedback = ({ isOpen, onClose }) => {
   const [feedback, setFeedback] = useState('');
   const [screenshot, setScreenshot] = useState(null);
   const [emailUpdates, setEmailUpdates] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const feedbackRef = useRef(null);
 
   useEffect(() => {
@@ -23,15 +24,31 @@ const Feedback = ({ isOpen, onClose }) => {
     };
   }, [isOpen, onClose]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement feedback submission logic
-    console.log('Feedback:', { feedback, screenshot, emailUpdates });
-    onClose();
+    
+    try {
+      let screenshotUrl = null;
+      if (screenshot) {
+       // screenshotUrl = await uploadToOSS(screenshot);
+      }
+      
+      /*await saveFeedback({
+        feedback,
+        screenshotUrl,
+        emailUpdates
+      });*/
+      
+      onClose();
+    } catch (error) {
+      console.error('提交反馈失败:', error);
+      alert('提交反馈失败，请稍后重试');
+    }
   };
 
   const handleScreenshotCapture = async () => {
     try {
+      setIsVisible(false);
       const stream = await navigator.mediaDevices.getDisplayMedia({ preferCurrentTab: true });
       const video = document.createElement('video');
       video.srcObject = stream;
@@ -48,8 +65,10 @@ const Feedback = ({ isOpen, onClose }) => {
       setScreenshot(screenshotUrl);
 
       stream.getTracks().forEach(track => track.stop());
+      setIsVisible(true);
     } catch (error) {
       console.error('截图失败:', error);
+      setIsVisible(true);
     }
   };
 
@@ -57,7 +76,7 @@ const Feedback = ({ isOpen, onClose }) => {
 
   return (
     <div className="feedback-overlay">
-      <div className="feedback-container" ref={feedbackRef}>
+      <div className="feedback-container" ref={feedbackRef} style={{ display: isVisible ? 'flex' : 'none' }}>
         <div className="feedback-header">
           <h2>发送反馈给我们</h2>
           <button className="close-button" onClick={onClose}>

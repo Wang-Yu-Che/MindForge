@@ -54,6 +54,7 @@
   flex: 1;
   padding: 24px;
   overflow-y: auto;
+  min-height: 300px;
 }
 
 .feedback-section {
@@ -153,6 +154,9 @@
   border-top: 1px solid #e0e0e0;
   display: flex;
   justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.98);
 }
 
 .send-button {
