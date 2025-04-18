@@ -46,13 +46,53 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // TODO: 实现登录/注册逻辑
-      console.log('表单提交', formData);
-      // 登录成功后跳转到Welcome页面
-      navigate('/welcome');
+      try {
+        // 清除旧的token
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        // 只有在已有token时才添加Authorization头
+        const token = localStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = 'Bearer ' + token;
+        }
+        
+        const response = await fetch('http://localhost:3001/api/auth', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            action: isLogin ? 'login' : 'register'
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          if (data.error) {
+            setErrors({ submit: data.error });
+          } else {
+            throw new Error(data.message || '请求失败');
+          }
+          return;
+        }
+
+        // 存储新token到localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.userId);
+        
+        // 登录成功后跳转到Welcome页面
+        navigate('/welcome');
+      } catch (err) {
+        setErrors({ submit: err.message });
+      }
     }
   };
 
@@ -96,6 +136,11 @@ const Login = () => {
               {errors.confirmPassword && (
                 <span className="error-message">{errors.confirmPassword}</span>
               )}
+            </div>
+          )}
+          {errors.submit && (
+            <div className="form-group">
+              <span className="error-message">{errors.submit}</span>
             </div>
           )}
           <button type="submit" className="submit-button">

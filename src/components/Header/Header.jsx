@@ -57,8 +57,10 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    // 处理退出登录的逻辑
-    console.log('退出登录');
+    // 清除localStorage中的token和其他用户数据
+    localStorage.clear();
+    // 重定向到登录页面
+    window.location.href = '/';
     setIsAvatarMenuOpen(false);
   };
 

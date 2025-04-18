@@ -11,6 +11,7 @@ import ConversationFeature from './components/App/Features/ConversationFeature';
 import Features from './components/App/Features/Features';
 import DemoNotebook from './components/DemoNote/DemoNote'
 import NoteBookList from './components/NoteBookList/NotebookList';
+import PrivateRoute from './components/PrivateRoute/PrivateRoute';
 import './App.css';
 
 function App() {
@@ -30,9 +31,9 @@ function App() {
             </>
           } />
           <Route path="/login" element={<Login />} />
-          <Route path="/welcome" element={<Welcome />} />
-          <Route path="/demo-notebook" element={<DemoNotebook />} />
-          <Route path="/note-book-list" element={<NoteBookList />} />
+          <Route path="/welcome" element={<PrivateRoute><Welcome /></PrivateRoute>} />
+          <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
+          <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
         </Routes>
       </div>
     </Router>

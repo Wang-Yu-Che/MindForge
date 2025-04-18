@@ -1,10 +1,18 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import { registerUser, loginUser } from './authService.js';
+import jwt from 'jsonwebtoken';
+import { jwtConfig } from './config.js';
+import authMiddleware from './middleware/auth.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// 应用认证中间件到所有API路由
+// 应用认证中间件到所有路由，除了白名单路径
+app.use(authMiddleware);
 
 // 存储对话历史
 const conversations = new Map();
@@ -91,6 +99,32 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// 认证路由
+app.post('/api/auth', async (req, res) => {
+  try {
+    const { email, password, action } = req.body;
+    
+    if (action === 'register') {
+      const userId = await registerUser(email, password);
+      const token = jwt.sign({ userId }, jwtConfig.secretKey, { expiresIn: jwtConfig.expiresIn });
+      res.json({ token, userId });
+    } else if (action === 'login') {
+      const { userId, token } = await loginUser(email, password);
+      res.json({ token, userId });
+    } else {
+      throw new Error('无效的操作类型');
+    }
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// 启动服务器
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`服务器运行在端口 ${PORT}`);
+});
+
 // 清理过期的对话历史
 setInterval(() => {
   const oneHourAgo = Date.now() - 3600000;
@@ -101,8 +135,3 @@ setInterval(() => {
   }
 }, 3600000);
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Connected to Ollama at http://localhost:11434/`);
-}); 
