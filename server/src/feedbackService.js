@@ -5,10 +5,9 @@ import { dbConfig as dbConfigFromFile } from './config.js';
 
 const dbConfig = dbConfigFromFile;
 
-const ossClient = new OSS({
- region: 'oss-cn-beijing',
- bucket: 'mind-forge-server'
-});
+import { ossConfig } from './config.js';
+
+const ossClient = new OSS(ossConfig);
 
 const uploadToOSS = async (base64Image) => {
  try {
