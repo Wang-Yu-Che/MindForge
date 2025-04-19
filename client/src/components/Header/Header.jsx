@@ -50,10 +50,46 @@ const Header = () => {
     setIsAvatarMenuOpen(!isAvatarMenuOpen);
   };
 
-  const handleChangeAvatar = () => {
-    // 处理更换头像的逻辑
-    console.log('更换头像');
-    setIsAvatarMenuOpen(false);
+  const handleChangeAvatar = async () => {
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('userId', localStorage.getItem('userId'));
+        
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3001/api/user/avatar', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('上传头像失败');
+        }
+        
+        const data = await response.json();
+        // 更新本地头像显示
+        const avatarImg = document.querySelector('.user-avatar img');
+        if (avatarImg) {
+          avatarImg.src = data.avatarUrl;
+        }
+      };
+      input.click();
+    } catch (error) {
+      console.error('头像上传错误:', error);
+      alert('头像上传失败，请重试');
+    } finally {
+      setIsAvatarMenuOpen(false);
+    }
   };
 
   const handleLogout = () => {
@@ -82,7 +118,7 @@ const Header = () => {
       <div className="header-container">
         {/* 左侧Logo */}
         <div className="header-left">
-          <Link to="/" className="logo">
+          <Link to="/welcome" className="logo">
             <img src="/logo.svg" alt="MindForge" />
             <span>MindForge</span>
           </Link>

@@ -49,6 +49,31 @@ const registerUser = async (email, password) => {
   }
 };
 
+// 更新用户头像URL
+const updateUserAvatar = async (userId, avatarUrl) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+  
+    const [result] = await connection.execute(
+      'UPDATE users SET avatar_url = ? WHERE id = ?',
+      [avatarUrl, userId]
+    );
+  
+    if (result.affectedRows === 0) {
+      console.error(`用户ID ${userId} 不存在或更新失败`);
+      throw new Error('用户不存在或更新失败');
+    }
+    
+    await connection.end();
+    return { success: true };
+  } catch (err) {
+    console.error('更新头像时发生错误:', err);
+    throw err;
+  }
+};
+
+
+
 // 用户登录
 const loginUser = async (email, password) => {
   try {
@@ -111,9 +136,4 @@ const testRedisConnection = async () => {
   }
 };
 
-export {
-  registerUser,
-  loginUser,
-  testDatabaseConnection,
-  testRedisConnection
-};
+export { registerUser, loginUser, updateUserAvatar };

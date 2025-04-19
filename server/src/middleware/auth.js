@@ -25,6 +25,13 @@ const authMiddleware = (req, res, next) => {
   try {
     // 验证token
     const decoded = jwt.verify(token, jwtConfig.secretKey);
+    
+    // 确保userId是数字类型
+    const userId = decoded.userId?.userId || decoded.userId;
+    if (isNaN(userId)) {
+      throw new Error('无效的用户ID格式');
+    }
+    decoded.userId = Number(userId);
     req.user = decoded; // 将解码后的用户信息添加到请求对象中
     next();
   } catch (err) {

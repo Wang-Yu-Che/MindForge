@@ -1,15 +1,18 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
-import { registerUser, loginUser } from './authService.js';
+import { registerUser, loginUser, updateUserAvatar } from './authService.js';
 import jwt from 'jsonwebtoken';
 import { jwtConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback } from './feedbackService.js';
+import path from 'path';
+import fileUpload from 'express-fileupload';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload());
 
 // 应用认证中间件到所有API路由
 // 应用认证中间件到所有路由，除了白名单路径
@@ -141,6 +144,42 @@ app.post('/api/feedback', async (req, res) => {
   } catch (error) {
     console.error('保存反馈失败:', error);
     res.status(500).json({ error: '保存反馈失败' });
+  }
+});
+
+// 头像上传路由
+app.post('/api/user/avatar', async (req, res) => {
+  try {
+    if (!req.files || !req.files.avatar) {
+      return res.status(400).json({ error: '请上传头像文件' });
+    }
+    
+    const avatar = req.files.avatar;
+    
+    // 从认证信息中获取用户ID并验证
+    if (!req.user || !req.user.userId) {
+      console.error('未获取到用户ID:', req.user);
+      return res.status(401).json({ error: '用户认证信息无效' });
+    }
+    const userId = req.user.userId;
+    
+    // 将头像文件转换为base64格式
+    const base64Image = `data:${avatar.mimetype};base64,${avatar.data.toString('base64')}`;
+    
+    // 使用OSS上传头像
+    const avatarUrl = await uploadToOSS(base64Image, 'avatar');
+
+    // 更新用户头像URL
+    await updateUserAvatar(userId, avatarUrl);
+    
+    res.json({ avatarUrl });
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    res.status(500).json({ 
+      error: '头像上传失败',
+      message: error.message,
+      details: error.stack 
+    });
   }
 });
 
