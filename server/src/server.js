@@ -5,6 +5,7 @@ import { registerUser, loginUser } from './authService.js';
 import jwt from 'jsonwebtoken';
 import { jwtConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
+import { uploadToOSS, saveFeedback } from './feedbackService.js';
 
 const app = express();
 app.use(cors());
@@ -99,6 +100,10 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// 增加请求体大小限制
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 // 认证路由
 app.post('/api/auth', async (req, res) => {
   try {
@@ -116,6 +121,26 @@ app.post('/api/auth', async (req, res) => {
     }
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// 反馈路由
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { feedback, screenshot, emailUpdates } = req.body;
+    const userId = req.user.userId;
+    
+    let screenshotUrl = null;
+    if (screenshot) {
+      screenshotUrl = await uploadToOSS(screenshot);
+    }
+    
+    await saveFeedback({ feedback, screenshotUrl, emailUpdates, userId });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('保存反馈失败:', error);
+    res.status(500).json({ error: '保存反馈失败' });
   }
 });
 

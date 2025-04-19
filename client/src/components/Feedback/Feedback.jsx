@@ -28,16 +28,23 @@ const Feedback = ({ isOpen, onClose }) => {
     e.preventDefault();
     
     try {
-      let screenshotUrl = null;
-      if (screenshot) {
-       // screenshotUrl = await uploadToOSS(screenshot);
-      }
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          feedback,
+          screenshot,
+          emailUpdates
+        })
+      });
       
-      /*await saveFeedback({
-        feedback,
-        screenshotUrl,
-        emailUpdates
-      });*/
+      if (!response.ok) {
+        throw new Error('提交反馈失败');
+      }
       
       onClose();
     } catch (error) {
@@ -55,13 +62,19 @@ const Feedback = ({ isOpen, onClose }) => {
       await video.play();
 
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      
+      // 限制最大宽度为1200px
+      const maxWidth = 1200;
+      const scaleFactor = video.videoWidth > maxWidth ? maxWidth / video.videoWidth : 1;
+      canvas.width = video.videoWidth * scaleFactor;
+      canvas.height = video.videoHeight * scaleFactor;
 
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const screenshotUrl = canvas.toDataURL('image/png');
+      // 压缩截图
+      const quality = 0.7; // 设置压缩质量
+      const screenshotUrl = canvas.toDataURL('image/jpeg', quality);
       setScreenshot(screenshotUrl);
 
       stream.getTracks().forEach(track => track.stop());
