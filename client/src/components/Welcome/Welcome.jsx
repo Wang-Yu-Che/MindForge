@@ -1,25 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineCloudUpload, AiOutlineTeam, AiOutlineSafety } from 'react-icons/ai';
-import { Layout, Grid, Typography, Button, Space } from '@arco-design/web-react';
+import { Layout, Grid, Typography, Button, Space, Modal, Input, Message } from '@arco-design/web-react';
 import '@arco-design/web-react/dist/css/arco.css';
 import './Welcome.css';
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const [visible, setVisible] = useState(false);
+  const [libraryName, setLibraryName] = useState('');
 
   const handleDemoClick = () => {
     navigate('/demo-notebook');
   };
 
   const handleCreateClick = () => {
-    navigate('/demo-notebook', { state: { showUploadModal: true } });
+    setVisible(true);
+  };
+
+  const handleOk = () => {
+    if (!libraryName.trim()) {
+      Message.error('请输入知识库名称');
+      return;
+    }
+    navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
+    setVisible(false);
+    setLibraryName('');
+  };
+
+  const handleCancel = () => {
+    setVisible(false);
+    setLibraryName('');
   };
 
   return (
     <Layout className="welcome-container">
       <Layout.Content className="welcome-content">
         <Typography.Title heading={1} className="welcome-title">欢迎来到 MindForge</Typography.Title>
+
+        <Modal
+          title="创建新的知识库"
+          visible={visible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+        >
+          <Input
+            placeholder="请输入知识库名称"
+            value={libraryName}
+            onChange={setLibraryName}
+          />
+        </Modal>
 
         <div className="welcome-card">
           <Space direction="vertical" size={12}>

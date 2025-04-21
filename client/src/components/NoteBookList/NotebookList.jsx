@@ -10,7 +10,9 @@ import {
   Space,
   Typography,
   Select,
-  Card
+  Card,
+  Modal,
+  Input
 } from '@arco-design/web-react';
 import {
   IconPlus,
@@ -27,8 +29,26 @@ const NoteBookList = () => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('table'); // table 或 card
 
+  const [visible, setVisible] = useState(false);
+  const [libraryName, setLibraryName] = useState('');
+
   const handleCreateClick = () => {
-    navigate('/demo-notebook', { state: { showUploadModal: true } });
+    setVisible(true);
+  };
+
+  const handleOk = () => {
+    if (!libraryName.trim()) {
+      Message.error('请输入知识库名称');
+      return;
+    }
+    navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
+    setVisible(false);
+    setLibraryName('');
+  };
+
+  const handleCancel = () => {
+    setVisible(false);
+    setLibraryName('');
   };
 
   const data = [
@@ -174,6 +194,18 @@ const NoteBookList = () => {
           <Button icon={<IconPlus />} type="primary" shape="round" onClick={handleCreateClick}>
             创建新的
           </Button>
+          <Modal
+            title="创建新的知识库"
+            visible={visible}
+            onOk={handleOk}
+            onCancel={handleCancel}
+          >
+            <Input
+              placeholder="请输入知识库名称"
+              value={libraryName}
+              onChange={setLibraryName}
+            />
+          </Modal>
 
           <Space>
             <Button

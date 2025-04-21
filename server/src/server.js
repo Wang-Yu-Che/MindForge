@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { jwtConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback } from './feedbackService.js';
-import path from 'path';
+import { uploadSourceFile, getUserSources } from './sourceService.js';
 import fileUpload from 'express-fileupload';
 
 const app = express();
@@ -144,6 +144,47 @@ app.post('/api/feedback', async (req, res) => {
   } catch (error) {
     console.error('保存反馈失败:', error);
     res.status(500).json({ error: '保存反馈失败' });
+  }
+});
+
+// 源文件上传路由
+app.post('/api/sources/upload', async (req, res) => {
+  try {
+    if (!req.files || !req.files.file) {
+      return res.status(400).json({ error: '请上传文件' });
+    }
+    
+    const file = req.files.file;
+    const userId = req.user.userId;
+    const rawFileName = req.body.fileName ? decodeURIComponent(req.body.fileName) : file.name;
+
+    
+    // 将文件转换为base64格式
+    const base64File = `data:${file.mimetype};base64,${file.data.toString('base64')}`;
+    
+    // 上传文件并保存信息
+    const result = await uploadSourceFile(base64File, rawFileName, userId,req.body.libraryName,rawFileName);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('源文件上传失败:', error);
+    res.status(500).json({ 
+      error: '源文件上传失败',
+      message: error.message
+    });
+  }
+});
+
+// 获取用户的源文件列表
+app.get('/api/sources', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const folderName = req.query.folderName;
+    const sources = await getUserSources(userId, folderName);
+    res.json(sources);
+  } catch (error) {
+    console.error('获取源文件列表失败:', error);
+    res.status(500).json({ error: '获取源文件列表失败' });
   }
 });
 

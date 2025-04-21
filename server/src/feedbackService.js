@@ -9,12 +9,17 @@ import { ossConfig } from './config.js';
 
 const ossClient = new OSS(ossConfig);
 
-const uploadToOSS = async (base64Image, type = 'feedback') => {
+const uploadToOSS = async (base64Image, type = 'feedback', folderName,fileName = '') => {
  try {
   const buffer = Buffer.from(base64Image.split(',')[1], 'base64');
-  const filename = type === 'avatar' 
-   ? `avatar/${uuidv4()}.png`
-   : `feedback/screenshots/${uuidv4()}.png`;
+  let filename;
+  if (type === 'avatar') {
+   filename = `avatar/${uuidv4()}.png`;
+  } else if (type === 'sources' && folderName) {
+   filename = `sources/${folderName}/${fileName}`;
+  } else {
+   filename = `feedback/screenshots/${uuidv4()}.png`;
+  }
   
   const result = await ossClient.put(filename, buffer);
   return result.url;
