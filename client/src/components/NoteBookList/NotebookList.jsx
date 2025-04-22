@@ -311,7 +311,19 @@ const NoteBookList = () => {
         ) : error ? (
           <Message type="error" content={error} />
         ) : viewMode === 'table' ? (
-          <Table columns={columns} data={data} pagination={false} />
+          <Table 
+            columns={columns} 
+            data={data} 
+            pagination={false}
+            onRow={(record) => ({
+              onClick: (e) => {
+                // 阻止事件冒泡，避免与菜单项点击冲突
+                if (!e.target.closest('.arco-dropdown-menu, .arco-btn')) {
+                  navigate('/demo-notebook', { state: { libraryName: record.title } });
+                }
+              }
+            })}
+          />
         ) : (
           renderCardList()
         )}

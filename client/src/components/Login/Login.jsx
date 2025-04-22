@@ -89,8 +89,31 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('userId', data.userId);
         
-        // 登录成功后跳转到Welcome页面
-        navigate('/welcome');
+        // 查询用户笔记本数量
+        try {
+          const notebooksResponse = await fetch(`http://localhost:3001/api/notebooks?userId=${data.userId}`, {
+            headers: {
+              'Authorization': `Bearer ${data.token}`
+            }
+          });
+          
+          if (!notebooksResponse.ok) {
+            throw new Error('获取笔记本数据失败');
+          }
+          
+          const notebooks = await notebooksResponse.json();
+          
+          // 根据笔记本数量决定跳转路径
+          if (notebooks.length > 0) {
+            navigate('/note-book-list');
+          } else {
+            navigate('/welcome');
+          }
+        } catch (err) {
+          console.error('查询笔记本错误:', err);
+          // 默认跳转到欢迎页面
+          navigate('/welcome');
+        }
       } catch (err) {
         setErrors({ submit: err.message });
       }
