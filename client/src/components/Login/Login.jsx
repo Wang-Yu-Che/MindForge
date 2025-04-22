@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@arco-design/web-react';
 import './Login.css';
 
 const Login = () => {
@@ -143,9 +144,9 @@ const Login = () => {
               <span className="error-message">{errors.submit}</span>
             </div>
           )}
-          <button type="submit" className="submit-button">
+          <Button type="primary" htmlType="submit" className="submit-button">
             {isLogin ? '登录' : '注册'}
-          </button>
+          </Button>
         </form>
         <p className="switch-form">
           {isLogin ? '还没有账号？' : '已有账号？'}

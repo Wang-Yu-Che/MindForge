@@ -157,6 +157,10 @@
   cursor: pointer;
 }
 
+[data-theme='dark'] .settings-menu-item {
+  color: #ffffff;
+}
+
 .settings-menu-item:hover {
   background-color: rgba(0, 0, 0, 0.05);
   color: #000000;
@@ -193,6 +197,11 @@
   visibility: hidden;
   transform: translateX(-10px);
   transition: all 0.2s ease;
+}
+
+[data-theme='dark'] .submenu {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .submenu.active {

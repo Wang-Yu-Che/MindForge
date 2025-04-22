@@ -7,6 +7,10 @@
   padding: 40px;
 }
 
+[data-theme='dark'] .welcome-container {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
 .welcome-content {
   max-width: 900px;
   width: 100%;
@@ -28,6 +32,15 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+[data-theme='dark'] .welcome-card {
+  background: #1e293b;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .feature-item h5 {
+  color: #000000;
+}
+
 .features-grid {
   margin-top: 32px;
   margin-bottom: 32px;
@@ -45,6 +58,10 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
+}
+
+[data-theme='dark'] .feature-icon {
+  background-color: #334155;
 }
 
 .welcome-actions {

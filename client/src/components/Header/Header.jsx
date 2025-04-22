@@ -2,13 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import './Header.css';
 import Feedback from '../Feedback/Feedback';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Header = () => {
   const location = useLocation();
   const isWelcomePage = !['/', '/login'].includes(location.pathname);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const settingsRef = useRef(null);
+
+  const handleThemeSettings = (e) => {
+    e.stopPropagation();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -32,18 +38,13 @@ const Header = () => {
     setIsSettingsOpen(false);
   };
 
-  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const avatarRef = useRef(null);
 
-  const handleThemeSettings = () => {
-    setIsThemeMenuOpen(!isThemeMenuOpen);
-  };
+  const { theme, toggleTheme } = useTheme();
 
-  const handleThemeChange = (theme) => {
-    // 处理主题切换的逻辑
-    console.log('切换主题：', theme);
-    setIsThemeMenuOpen(false);
+  const handleThemeChange = () => {
+    toggleTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   const handleAvatarClick = () => {

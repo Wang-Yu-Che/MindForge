@@ -5,6 +5,10 @@
     overflow: hidden;
   }
   
+  [data-theme='dark'] .demo-notebook-layout {
+    background-color: #1a1a2e;
+  }
+  
   /* 左右面板通用样式 */
   .sider-panel,
   .right-panel {
@@ -17,6 +21,12 @@
     display: flex;
     flex-direction: column;
     overflow: visible;
+  }
+  
+  [data-theme='dark'] .sider-panel,
+  [data-theme='dark'] .right-panel {
+    background-color: #1e293b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
   
   .sider-header {
@@ -54,13 +64,31 @@
     text-align: left;
   }
   
+  [data-theme='dark'] .source-item {
+    color: #e2e8f0;
+  }
+  
   .source-item:hover {
     background-color: #f2f3f5;
+  }
+  
+  [data-theme='dark'] .source-item:hover {
+    background-color: #334155;
+  }
+  
+  [data-theme='dark'] .section-title,
+  [data-theme='dark'] .arco-typography,
+  [data-theme='dark'] .arco-title {
+    color: #ffffff;
   }
   
   .source-item.active {
     background-color: #eaf0ff;
     font-weight: 600;
+  }
+  
+  [data-theme='dark'] .source-item.active {
+    background-color: #1e40af;
   }
   
   /* 中间聊天区域 */
@@ -71,6 +99,11 @@
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     overflow: auto;
+  }
+  
+  [data-theme='dark'] .content-panel {
+    background-color: #1e293b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
   
   .chat-area {
@@ -85,6 +118,15 @@
     border-radius: 8px;
     padding: 12px 16px;
     line-height: 1.6;
+  }
+  
+  [data-theme='dark'] .chat-intro {
+    background: #334155;
+    color: #e2e8f0;
+  }
+  
+  [data-theme='dark'] .message.assistant span {
+    color: #000000;
   }
   
   .chat-buttons {
@@ -133,6 +175,10 @@
     border-radius: 8px;
     max-height: 60vh;
   }
+
+  [data-theme='dark'] .message-container {
+    background: #334155;
+  }
   
   .message {
     margin-bottom: 16px;
@@ -167,6 +213,10 @@
   
   .message-content {
     line-height: 1.6;
+  }
+
+  [data-theme='dark'] .message-content {
+    color: #000000;
   }
   
   .chat-input-container {

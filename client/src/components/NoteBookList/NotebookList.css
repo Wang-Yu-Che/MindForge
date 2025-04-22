@@ -52,3 +52,15 @@
     margin-top: 8px;
   }
   
+[data-theme='dark'] .notebook-list-layout {
+  background-color: #1a1a2e;
+}
+
+[data-theme='dark'] .notebook-card {
+  background: linear-gradient(to right, #2d3748, #4a5568);
+}
+
+[data-theme='dark'] .notebook-card-sub {
+  color: #a0aec0;
+}
+  

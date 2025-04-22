@@ -12,13 +12,16 @@ import Features from './components/App/Features/Features';
 import DemoNotebook from './components/DemoNote/DemoNote'
 import NoteBookList from './components/NoteBookList/NotebookList';
 import PrivateRoute from './components/PrivateRoute/PrivateRoute';
+import { ThemeProvider } from './contexts/ThemeContext';
 import './App.css';
+import './styles/theme.css';
 
 function App() {
   return (
-    <Router>
-      <div className="app">
-        <Header />
+    <ThemeProvider>
+      <Router>
+        <div className="app">
+          <Header />
         <Routes>
           <Route path="/" element={
             <>
@@ -35,8 +38,9 @@ function App() {
           <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
           <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
         </Routes>
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 

@@ -1,0 +1,134 @@
+:root[data-theme='light'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #000000;
+  --text-secondary: #5f6368;
+  --border-color: #e0e0e0;
+  --hover-bg: rgba(0, 0, 0, 0.05);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme='dark'] {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --border-color: #333333;
+  --hover-bg: rgba(255, 255, 255, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.header {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-container {
+  background-color: var(--bg-primary);
+}
+
+.logo span {
+  color: var(--text-primary);
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+}
+
+.nav-links a:hover {
+  color: var(--text-primary);
+}
+
+.settings-button {
+  color: var(--text-secondary);
+}
+
+.settings-button:hover {
+  color: var(--text-primary);
+}
+
+.settings-menu {
+  background-color: var(--bg-primary);
+  box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.settings-menu-item {
+  color: var(--text-secondary);
+}
+
+.settings-menu-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+/* Login styles */
+.login-container {
+  background-color: var(--bg-secondary);
+}
+
+.login-box {
+  background-color: var(--bg-primary);
+  box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.login-box h2 {
+  color: var(--text-primary);
+}
+
+.login-box input {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.login-box input:focus {
+  border-color: var(--text-secondary);
+}
+
+.submit-button {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.switch-form {
+  color: var(--text-secondary);
+}
+
+.switch-button {
+  color: var(--text-primary);
+}
+
+/* Welcome styles */
+.welcome-container {
+  background-color: var(--bg-primary);
+}
+
+.welcome-content {
+  background-color: var(--bg-primary);
+}
+
+.welcome-title {
+  color: var(--text-primary);
+}
+
+.welcome-card {
+  background-color: var(--bg-primary);
+  box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.feature-icon {
+  color: var(--text-primary);
+}
+
+.feature-item h5 {
+  color: var(--text-primary);
+}
+
+.feature-item p {
+  color: var(--text-secondary);
+}
