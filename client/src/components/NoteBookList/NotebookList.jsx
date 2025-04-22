@@ -1,5 +1,5 @@
 import './NotebookList.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -28,22 +28,51 @@ const { Title } = Typography;
 const NoteBookList = () => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('table'); // table 或 card
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState([]);
 
   const [visible, setVisible] = useState(false);
   const [libraryName, setLibraryName] = useState('');
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingNotebook, setEditingNotebook] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
 
   const handleCreateClick = () => {
     setVisible(true);
   };
 
-  const handleOk = () => {
+  const handleOk = async () => {
     if (!libraryName.trim()) {
       Message.error('请输入知识库名称');
       return;
     }
-    navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
-    setVisible(false);
-    setLibraryName('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/notebooks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: libraryName.trim()
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('创建笔记本失败');
+      }
+      
+      await response.json();
+      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
+      setVisible(false);
+      setLibraryName('');
+    } catch (error) {
+      console.error('创建笔记本错误:', error);
+      Message.error('创建笔记本失败，请重试');
+    }
   };
 
   const handleCancel = () => {
@@ -51,57 +80,39 @@ const NoteBookList = () => {
     setLibraryName('');
   };
 
-  const data = [
-    {
-      key: '1',
-      title: '无标题笔记本',
-      source: '0 个来源',
-      date: '2025年4月17日',
-      role: '所有者',
-    },
-    {
-      key: '2',
-      title: '无标题笔记本',
-      source: '0 个来源',
-      date: '2025年4月17日',
-      role: '所有者',
-    },
-    {
-      key: '3',
-      title: '无标题笔记本',
-      source: '0 个来源',
-      date: '2025年4月17日',
-      role: '所有者',
-    },
-    {
-        key: '4',
-        title: '无标题笔记本',
-        source: '0 个来源',
-        date: '2025年4月17日',
-        role: '所有者',
-      },
-      {
-        key: '5',
-        title: '无标题笔记本',
-        source: '0 个来源',
-        date: '2025年4月17日',
-        role: '所有者',
-      },
-      {
-        key: '6',
-        title: '无标题笔记本',
-        source: '0 个来源',
-        date: '2025年4月17日',
-        role: '所有者',
-      },
-      {
-        key: '7',
-        title: '无标题笔记本',
-        source: '0 个来源',
-        date: '2025年4月17日',
-        role: '所有者',
-      },
-  ];
+  useEffect(() => {
+    const fetchNotebooks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3001/api/notebooks', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error('获取笔记本数据失败');
+        }
+        const notebooks = await response.json();
+        const formattedData = notebooks.map((item) => ({
+          key: item.id.toString(),
+          title: item.title || '无标题笔记本',
+          source: item.source_count ? `${item.source_count} 个来源` : '0 个来源',
+          date: new Date(item.created_at).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          role: item.role
+        }));
+        setData(formattedData);
+      } catch (err) {
+        setError(err.message);
+        Message.error(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotebooks();
+  }, []);
+
+
 
   const columns = [
     {
@@ -124,10 +135,41 @@ const NoteBookList = () => {
         <Dropdown
           droplist={
             <Menu>
-              <Menu.Item key="edit" onClick={() => Message.info(`编辑：${record.title}`)}>
+              <Menu.Item key="edit" onClick={() => {
+                  setEditingNotebook(record);
+                  setNewTitle(record.title);
+                  setEditModalVisible(true);
+                }}>
                 <IconEdit /> 编辑标题
               </Menu.Item>
-              <Menu.Item key="delete" onClick={() => Message.info(`删除：${record.title}`)}>
+              <Menu.Item key="delete" onClick={() => {
+                  Modal.confirm({
+                    title: '确认删除',
+                    content: `确定要删除笔记本"${record.title}"吗？`,
+                    okText: '确认',
+                    cancelText: '取消',
+                    onOk: async () => {
+                      try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`http://localhost:3001/api/notebooks/${record.key}`, {
+                          method: 'DELETE',
+                          headers: {
+                            'Authorization': `Bearer ${token}`
+                          }
+                        });
+                        if (!response.ok) {
+                          throw new Error('删除笔记本失败');
+                        }
+                        Message.success('删除成功');
+                        // 刷新列表
+                        const notebooks = data.filter(item => item.key !== record.key);
+                        setData(notebooks);
+                      } catch (err) {
+                        Message.error(err.message);
+                      }
+                    }
+                  });
+                }}>
                 <IconDelete /> 删除
               </Menu.Item>
             </Menu>
@@ -145,19 +187,46 @@ const NoteBookList = () => {
       {data.map((item) => (
         <Card key={item.key} className="notebook-card" hoverable>
           <div className="notebook-card-header">
-            <img
-              src="https://www.gstatic.com/lamda/images/ic_notebook_color_48dp.png"
-              alt="icon"
-              className="notebook-icon"
-            />
+          <span className="notebook-icon">📘</span>
             <Dropdown
               trigger="click"
               droplist={
                 <Menu>
-                  <Menu.Item key="edit" onClick={() => Message.info(`编辑：${item.title}`)}>
+                  <Menu.Item key="edit" onClick={() => {
+                    setEditingNotebook(item);
+                    setNewTitle(item.title);
+                    setEditModalVisible(true);
+                  }}>
                     <IconEdit /> 编辑标题
                   </Menu.Item>
-                  <Menu.Item key="delete" onClick={() => Message.info(`删除：${item.title}`)}>
+                  <Menu.Item key="delete" onClick={() => {
+                      Modal.confirm({
+                        title: '确认删除',
+                        content: `确定要删除笔记本"${item.title}"吗？`,
+                        okText: '确认',
+                        cancelText: '取消',
+                        onOk: async () => {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch(`http://localhost:3001/api/notebooks/${item.key}`, {
+                              method: 'DELETE',
+                              headers: {
+                                'Authorization': `Bearer ${token}`
+                              }
+                            });
+                            if (!response.ok) {
+                              throw new Error('删除笔记本失败');
+                            }
+                            Message.success('删除成功');
+                            // 刷新列表
+                            const notebooks = data.filter(notebook => notebook.key !== item.key);
+                            setData(notebooks);
+                          } catch (err) {
+                            Message.error(err.message);
+                          }
+                        }
+                      });
+                    }}>
                     <IconDelete /> 删除
                   </Menu.Item>
                 </Menu>
@@ -218,19 +287,86 @@ const NoteBookList = () => {
               icon={<IconList />}
               onClick={() => setViewMode('table')}
             />
-            <Select defaultValue="最近的" style={{ width: 100 }}>
+            <Select defaultValue="最近的" style={{ width: 100 }} onChange={(value) => {
+              const sortedData = [...data];
+              if (value === 'recent') {
+                sortedData.sort((a, b) => {
+                  const dateA = new Date(a.key);
+                  const dateB = new Date(b.key);
+                  return dateB - dateA;
+                });
+              } else if (value === 'title') {
+                sortedData.sort((a, b) => a.title.localeCompare(b.title));
+              }
+              setData(sortedData);
+            }}>
               <Select.Option value="recent">最近的</Select.Option>
               <Select.Option value="title">标题</Select.Option>
             </Select>
           </Space>
         </div>
 
-        {viewMode === 'table' ? (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>加载中...</div>
+        ) : error ? (
+          <Message type="error" content={error} />
+        ) : viewMode === 'table' ? (
           <Table columns={columns} data={data} pagination={false} />
         ) : (
           renderCardList()
         )}
       </div>
+
+      {/* 编辑标题的Modal */}
+      <Modal
+        title="编辑笔记本标题"
+        visible={editModalVisible}
+        onOk={async () => {
+          if (!newTitle.trim()) {
+            Message.error('标题不能为空');
+            return;
+          }
+          try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:3001/api/notebooks/${editingNotebook.key}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                title: newTitle.trim()
+              })
+            });
+            if (!response.ok) {
+              throw new Error('更新笔记本标题失败');
+            }
+            Message.success('更新成功');
+            // 更新列表数据
+            const updatedData = data.map(item => {
+              if (item.key === editingNotebook.key) {
+                return { ...item, title: newTitle.trim() };
+              }
+              return item;
+            });
+            setData(updatedData);
+            setEditModalVisible(false);
+          } catch (err) {
+            Message.error(err.message);
+          }
+        }}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setEditingNotebook(null);
+          setNewTitle('');
+        }}
+      >
+        <Input
+          placeholder="请输入新的笔记本标题"
+          value={newTitle}
+          onChange={setNewTitle}
+        />
+      </Modal>
     </div>
   );
 };

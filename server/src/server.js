@@ -7,6 +7,7 @@ import { jwtConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback } from './feedbackService.js';
 import { uploadSourceFile, getUserSources } from './sourceService.js';
+import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook } from './notebookService.js';
 import fileUpload from 'express-fileupload';
 
 const app = express();
@@ -185,6 +186,55 @@ app.get('/api/sources', async (req, res) => {
   } catch (error) {
     console.error('获取源文件列表失败:', error);
     res.status(500).json({ error: '获取源文件列表失败' });
+  }
+});
+
+// 笔记本相关路由
+app.post('/api/notebooks', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title } = req.body;
+    const result = await createNotebook(userId, title);
+    res.json(result);
+  } catch (error) {
+    console.error('创建笔记本失败:', error);
+    res.status(500).json({ error: '创建笔记本失败' });
+  }
+});
+
+app.get('/api/notebooks', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notebooks = await getNotebooks(userId);
+    res.json(notebooks);
+  } catch (error) {
+    console.error('获取笔记本列表失败:', error);
+    res.status(500).json({ error: '获取笔记本列表失败' });
+  }
+});
+
+app.put('/api/notebooks/:id', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notebookId = req.params.id;
+    const { title } = req.body;
+    const result = await updateNotebook(notebookId, title);
+    res.json(result);
+  } catch (error) {
+    console.error('更新笔记本失败:', error);
+    res.status(500).json({ error: '更新笔记本失败' });
+  }
+});
+
+app.delete('/api/notebooks/:id', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notebookId = req.params.id;
+    await deleteNotebook(notebookId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除笔记本失败:', error);
+    res.status(500).json({ error: '删除笔记本失败' });
   }
 });
 

@@ -21,6 +21,15 @@ const saveSourceFile = async (sourceData) => {
     
     const [result] = await connection.execute(query, [userId, encodedFileName, fileUrl, encodedFolderName]);
     await connection.end();
+    
+    // 更新对应笔记本的source_count
+    if (folderName) {
+      const updateConnection = await mysql.createConnection(dbConfig);
+      const updateQuery = 'UPDATE notebooks SET source_count = source_count + 1 WHERE title = ?';
+      await updateConnection.execute(updateQuery, [folderName]);
+      await updateConnection.end();
+    }
+    
     return result.insertId;
   } catch (error) {
     console.error('保存源文件信息失败:', error);
@@ -34,7 +43,6 @@ const getUserSources = async (userId, folderName) => {
     const connection = await mysql.createConnection(dbConfig);
     let query = 'SELECT * FROM sources WHERE user_id = ?';
     const params = [userId];
-    console.log(folderName)
     
     if (folderName) {
       query += ' AND folder_name = ?';

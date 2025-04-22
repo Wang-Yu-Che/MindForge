@@ -18,14 +18,37 @@ const Welcome = () => {
     setVisible(true);
   };
 
-  const handleOk = () => {
+  const handleOk = async () => {
     if (!libraryName.trim()) {
       Message.error('请输入知识库名称');
       return;
     }
-    navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
-    setVisible(false);
-    setLibraryName('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/notebooks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: libraryName.trim()
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('创建笔记本失败');
+      }
+      
+      await response.json();
+      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
+      setVisible(false);
+      setLibraryName('');
+    } catch (error) {
+      console.error('创建笔记本错误:', error);
+      Message.error('创建笔记本失败，请重试');
+    }
   };
 
   const handleCancel = () => {
