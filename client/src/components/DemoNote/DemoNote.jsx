@@ -19,6 +19,8 @@ import {
   IconArrowRight,
   IconSend
 } from '@arco-design/web-react/icon';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import './DemoNote.css';
 
 const { Sider, Content } = Layout;
@@ -154,6 +156,9 @@ const DemoNotebook = () => {
 
   const toggleLeftPanel = () => setLeftCollapsed(!leftCollapsed);
   const toggleRightPanel = () => setRightCollapsed(!rightCollapsed);
+  const [showEditor, setShowEditor] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
 
   const notes = [
     {
@@ -407,22 +412,68 @@ const DemoNotebook = () => {
       >
         {!rightCollapsed ? (
           <>
-            <Title heading={6}>笔记</Title>
-            <div className="note-buttons">
-              <Button type="outline" style={{ gridColumn: 'span 2' }}>添加注释</Button>
-              <Button type="outline">学习指南</Button>
-              <Button type="outline">简报文件</Button>
-              <Button type="outline">常问问题</Button>
-              <Button type="outline">时间线</Button>
+            <div className="sider-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ flex: 1 }}>笔记</Text>
+              <div>
+                {showEditor ? (
+                  <Button type="text" size="mini" shape="fill" className="icon-button" onClick={() => setShowEditor(false)}>返回</Button>
+                ) : !rightCollapsed ? null : (
+                  <Button
+                    icon={<IconPlus />}
+                    type="text" size="mini" shape="fill"
+                    className="icon-button"
+                  />
+                )}
+              </div>
             </div>
-            <div className="note-list">
-              {notes.map((note, idx) => (
-                <div key={idx} className="note-item">
-                  <div className="note-title">{note.icon} {note.title}</div>
-                  <div className="note-text">{note.content}</div>
+            {!showEditor && (
+              <div className="note-buttons">
+                <Button type="outline" style={{ gridColumn: 'span 2' }} onClick={() => setShowEditor(!showEditor)}>添加注释</Button>
+                <Button type="outline">学习指南</Button>
+                <Button type="outline">简报文件</Button>
+                <Button type="outline">常问问题</Button>
+                <Button type="outline">时间线</Button>
+              </div>
+            )}
+            {showEditor ? (
+              <div>
+                <Input
+                  placeholder="注释标题"
+                  value={title}
+                  onChange={setTitle}
+                  allowClear
+                  className="sider-search"
+                />
+                <div style={{ marginTop: 0 }}>
+                  <div style={{ flex: 1, minHeight: 0, marginBottom: 24 }}>
+                  <ReactQuill
+                    theme="snow"
+                    value={content}
+                    onChange={setContent}
+                    style={{ height: 295 }}
+                  />
                 </div>
-              ))}
-            </div>
+                  <div style={{ 
+                    marginTop: 110,
+                    display: 'flex', 
+                    gap: 8,
+                    paddingBottom: 16,
+                    justifyContent: 'flex-end'
+                  }}>
+                    <Button type="outline">转换成源</Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="note-list">
+                {notes.map((note, idx) => (
+                  <div key={idx} className="note-item">
+                    <div className="note-title">{note.icon} {note.title}</div>
+                    <div className="note-text">{note.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <>

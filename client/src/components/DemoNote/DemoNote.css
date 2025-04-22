@@ -175,6 +175,15 @@
     border-radius: 8px;
     max-height: 60vh;
   }
+  
+  .ql-toolbar.ql-snow {
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+  
+  .ql-container.ql-snow {
+    height: 340px;
+  }
 
   [data-theme='dark'] .message-container {
     background: #334155;
