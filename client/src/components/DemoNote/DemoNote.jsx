@@ -11,13 +11,17 @@ import {
   Message,
   Modal,
   Upload,
-  Progress
+  Progress,
+  List,
+  Dropdown,
+  Menu
 } from '@arco-design/web-react';
 import {
   IconPlus,
   IconArrowLeft,
   IconArrowRight,
-  IconSend
+  IconSend,
+  IconMore
 } from '@arco-design/web-react/icon';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -67,12 +71,35 @@ const DemoNotebook = () => {
     }
   }, [state?.libraryName]);
 
+  const fetchNotes = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/notes?folderName=${encodeURIComponent(state?.libraryName || 'default')}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotes(data.map(note => ({
+          id: note.id,
+          title: note.title,
+          content: note.content,
+          icon: '📝'
+        })));
+      }
+    } catch (error) {
+      console.error('获取笔记列表失败:', error);
+      Message.error('获取笔记列表失败');
+    }
+  }, [state?.libraryName]);
+
   useEffect(() => {
     if (state?.showUploadModal) {
       setUploadModalVisible(true);
     }
     fetchSources();
-  }, [state?.showUploadModal, fetchSources]);
+    fetchNotes();
+  }, [state?.showUploadModal, fetchSources, fetchNotes]);
 
   const handleUpload = async (file) => {
     if (!file) {
@@ -159,20 +186,10 @@ const DemoNotebook = () => {
   const [showEditor, setShowEditor] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
-  const notes = [
-    {
-      icon: '🟠',
-      title: '关于此笔记本',
-      content: '这款笔记本旨在帮助您了解 MindForge 的功能。',
-    },
-    {
-      icon: '🟠',
-      title: '我为什么不能写笔记？',
-      content: '这是一个只读的演示笔记本，用于体验基本功能。',
-    },
-  ];
-
+  const [notes, setNotes] = useState([]);
+  
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -416,19 +433,66 @@ const DemoNotebook = () => {
               <Text style={{ flex: 1 }}>笔记</Text>
               <div>
                 {showEditor ? (
-                  <Button type="text" size="mini" shape="fill" className="icon-button" onClick={() => setShowEditor(false)}>返回</Button>
+                  <Button type="text" size="mini" shape="fill" className="icon-button" onClick={async () => {
+                    if (isReadOnly) {
+                      setShowEditor(false);
+                      return;
+                    }
+                    if (!title.trim() && !content.trim()) {
+                      setShowEditor(false);
+                      return;
+                    }
+                    try {
+                      const response = await fetch('http://localhost:3001/api/notes', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        },
+                        body: JSON.stringify({
+                          title,
+                          content,
+                          folderName: state?.libraryName || 'default'
+                        })
+                      });
+                      if (response.ok) {
+                        setShowEditor(false);
+                        Message.success('笔记保存成功');
+                        await fetchNotes();
+                      } else {
+                        throw new Error('保存失败');
+                      }
+                    } catch (error) {
+                      console.error('保存笔记失败:', error);
+                      Message.error('保存笔记失败');
+                    }
+                  }}>{isReadOnly ? '返回' : '保存'}</Button>
                 ) : !rightCollapsed ? null : (
                   <Button
                     icon={<IconPlus />}
-                    type="text" size="mini" shape="fill"
+                    size="mini"
+                    shape="fill"
+                    type="text"
                     className="icon-button"
+                    onClick={() => {
+                      setRightCollapsed(false);
+                      setShowEditor(true);
+                      setIsReadOnly(false);
+                      setTitle('');
+                      setContent('');
+                    }}
                   />
                 )}
               </div>
             </div>
             {!showEditor && (
               <div className="note-buttons">
-                <Button type="outline" style={{ gridColumn: 'span 2' }} onClick={() => setShowEditor(!showEditor)}>添加注释</Button>
+                <Button type="outline" style={{ gridColumn: 'span 2' }} onClick={() => {
+                  setShowEditor(!showEditor);
+                  setIsReadOnly(false);
+                  setTitle('');
+                  setContent('');
+                }}>添加注释</Button>
                 <Button type="outline">学习指南</Button>
                 <Button type="outline">简报文件</Button>
                 <Button type="outline">常问问题</Button>
@@ -442,6 +506,7 @@ const DemoNotebook = () => {
                   value={title}
                   onChange={setTitle}
                   allowClear
+                  readOnly={isReadOnly}
                   className="sider-search"
                 />
                 <div style={{ marginTop: 0 }}>
@@ -450,6 +515,7 @@ const DemoNotebook = () => {
                     theme="snow"
                     value={content}
                     onChange={setContent}
+                    readOnly={isReadOnly}
                     style={{ height: 295 }}
                   />
                 </div>
@@ -460,19 +526,123 @@ const DemoNotebook = () => {
                     paddingBottom: 16,
                     justifyContent: 'flex-end'
                   }}>
-                    <Button type="outline">转换成源</Button>
+                    <Button type="outline" onClick={async () => {
+                      try {
+                        const response = await fetch('http://localhost:3001/api/sources/convert', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                          },
+                          body: JSON.stringify({
+                            fileName: title,
+                            fileContent: content,
+                            userId: localStorage.getItem('userId'),
+                            libraryName: state?.libraryName || 'default'
+                          })
+                        });
+                        if (response.ok) {
+                          Message.success('转换成功');
+                          await fetchSources();
+                        } else {
+                          throw new Error('转换失败');
+                        }
+                      } catch (error) {
+                        console.error('转换失败:', error);
+                        Message.error('转换失败');
+                      }
+                    }}>转换成源</Button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="note-list">
+              <List className="note-list">
                 {notes.map((note, idx) => (
-                  <div key={idx} className="note-item">
-                    <div className="note-title">{note.icon} {note.title}</div>
-                    <div className="note-text">{note.content}</div>
-                  </div>
+                  <List.Item 
+                    key={idx} 
+                    className="note-item"
+                  >
+                    <div className="note-title" onClick={() => {
+                      setTitle(note.title);
+                      setContent(note.content);
+                      setShowEditor(true);
+                      setIsReadOnly(true);
+                    }}>
+                      <Typography.Title heading={6} style={{ margin: 0 }}>
+                        {note.icon} {note.title}
+                      </Typography.Title>
+                    </div>
+                    <Typography.Text type="secondary" className="note-text">
+                      {note.content.replace(/<[^>]*>/g, '')}
+                    </Typography.Text>
+                    <Dropdown
+                      droplist={
+                        <Menu>
+                          <Menu.Item key="edit" onClick={() => {
+                            Modal.confirm({
+                              title: '编辑标题',
+                              content: (
+                                <Input 
+                                  defaultValue={note.title}
+                                  onChange={(value) => setTitle(value)}
+                                />
+                              ),
+                              onOk: async () => {
+                                try {
+                                  const response = await fetch(`http://localhost:3001/api/notes/${note.id}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                    },
+                                    body: JSON.stringify({
+                                      title: title || note.title,
+                                      content: note.content
+                                    })
+                                  });
+                                  if (response.ok) {
+                                    Message.success('标题更新成功');
+                                    await fetchNotes();
+                                  } else {
+                                    throw new Error('更新失败');
+                                  }
+                                } catch (error) {
+                                  console.error('更新标题失败:', error);
+                                  Message.error('更新标题失败');
+                                }
+                              }
+                            });
+                          }}>编辑标题</Menu.Item>
+                          <Menu.Item key="delete" onClick={async () => {
+                            try {
+                              const response = await fetch(`http://localhost:3001/api/notes/${note.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                },
+                              });
+                              if (response.ok) {
+                                Message.success('删除成功');
+                                await fetchNotes();
+                              } else {
+                                throw new Error('删除失败');
+                              }
+                            } catch (error) {
+                              console.error('删除笔记失败:', error);
+                              Message.error('删除笔记失败');
+                            }
+                          }}>删除</Menu.Item>
+                        </Menu>
+                      }
+                      trigger="click"
+                      position="br"
+                    >
+                      <Button type="text" icon={<IconMore />} />
+                    </Dropdown>
+                  </List.Item>
                 ))}
-              </div>
+              </List>
             )}
           </>
         ) : (
@@ -484,11 +654,24 @@ const DemoNotebook = () => {
                 shape="fill"
                 type="text"
                 className="icon-button"
+                onClick={() => {
+                  setRightCollapsed(false);
+                  setShowEditor(true);
+                  setIsReadOnly(false);
+                  setTitle('');
+                  setContent('');
+                }}
               />
             </div>
             <div className="source-list">
               {notes.map((note, idx) =>
-                <div key={idx} className="source-icon">{note.icon}</div>
+                <div key={idx} className="source-icon" onClick={() => {
+                  setRightCollapsed(false);
+                  setShowEditor(true);
+                  setIsReadOnly(true);
+                  setTitle(note.title);
+                  setContent(note.content);
+                }}>{note.icon}</div>
               )}
             </div>
           </>

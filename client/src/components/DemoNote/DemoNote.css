@@ -64,6 +64,10 @@
     text-align: left;
   }
   
+  .source-icon {
+    cursor: pointer;
+  }
+  
   [data-theme='dark'] .source-item {
     color: #e2e8f0;
   }
@@ -266,5 +270,10 @@
   .sider-panel.collapsed,
   .right-panel.collapsed {
     padding: 16px 12px;
+  }
+  
+  .note-list {
+    margin-top: 24px;
+    overflow-y: auto;
   }
   

@@ -8,7 +8,7 @@ const dbConfig = dbConfigFromFile;
 const saveSourceFile = async (sourceData) => {
   try {
     const { fileName, fileUrl, userId, folderName } = sourceData;
-    
+   
     // 确保文件名使用UTF-8编码
     const encodedFileName = decodeURIComponent(fileName); // 解码客户端编码的文件名
     const encodedFolderName = folderName ? decodeURIComponent(folderName) : ''; // 解码客户端编码的文件夹名
@@ -84,4 +84,4 @@ const uploadSourceFile = async (base64File, fileName, userId, folderName) => {
   }
 };
 
-export { uploadSourceFile, getUserSources };
+export { uploadSourceFile, getUserSources, saveSourceFile };

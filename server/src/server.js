@@ -6,8 +6,9 @@ import jwt from 'jsonwebtoken';
 import { jwtConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback } from './feedbackService.js';
-import { uploadSourceFile, getUserSources } from './sourceService.js';
+import { uploadSourceFile, getUserSources,saveSourceFile } from './sourceService.js';
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook } from './notebookService.js';
+import { createNote, getNotes, updateNote, deleteNote } from './notesService.js';
 import fileUpload from 'express-fileupload';
 
 const app = express();
@@ -189,6 +190,7 @@ app.get('/api/sources', async (req, res) => {
   }
 });
 
+
 // 笔记本相关路由
 app.post('/api/notebooks', async (req, res) => {
   try {
@@ -226,6 +228,19 @@ app.put('/api/notebooks/:id', async (req, res) => {
   }
 });
 
+// 更新笔记路由
+app.put('/api/notes/:id', async (req, res) => {
+  try {
+    const noteId = req.params.id;
+    const { title, content } = req.body;
+    const result = await updateNote(noteId, title, content);
+    res.json(result);
+  } catch (error) {
+    console.error('更新笔记失败:', error);
+    res.status(500).json({ error: '更新笔记失败' });
+  }
+});
+
 app.delete('/api/notebooks/:id', async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -235,6 +250,64 @@ app.delete('/api/notebooks/:id', async (req, res) => {
   } catch (error) {
     console.error('删除笔记本失败:', error);
     res.status(500).json({ error: '删除笔记本失败' });
+  }
+});
+
+// 笔记相关路由
+app.post('/api/notes', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title, content, folderName } = req.body;
+    const noteId = await createNote(userId, title, content, folderName);
+    res.json({ noteId });
+  } catch (error) {
+    console.error('创建笔记失败:', error);
+    res.status(500).json({ error: '创建笔记失败' });
+  }
+});
+
+app.post('/api/sources/convert', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { fileName, fileContent, libraryName } = req.body;
+     
+    const result = await saveSourceFile({
+      fileName,
+      fileUrl :fileContent,
+      userId,
+      folderName: libraryName // 使用传入的文件夹名
+    });
+    
+    res.json(result);
+  } catch (error) {
+    console.error('转换源文件失败:', error);
+    res.status(500).json({ 
+      error: '转换源文件失败',
+      message: error.message
+    });
+  }
+});
+
+app.get('/api/notes', async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const folderName = req.query.folderName;
+    const notes = await getNotes(userId, folderName);
+    res.json(notes);
+  } catch (error) {
+    console.error('获取笔记列表失败:', error);
+    res.status(500).json({ error: '获取笔记列表失败' });
+  }
+});
+
+app.delete('/api/notes/:id', async (req, res) => {
+  try {
+    const noteId = req.params.id;
+    await deleteNote(noteId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除笔记失败:', error);
+    res.status(500).json({ error: '删除笔记失败' });
   }
 });
 
