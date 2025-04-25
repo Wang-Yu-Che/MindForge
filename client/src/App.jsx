@@ -9,7 +9,8 @@ import GuideFeature from './components/App/Features/GuideFeature';
 import AnswerFeature from './components/App/Features/AnswerFeature';
 import ConversationFeature from './components/App/Features/ConversationFeature';
 import Features from './components/App/Features/Features';
-import DemoNotebook from './components/DemoNote/DemoNote'
+import Notebook from './components/Note/Note'
+import DemoNotebook from './components/DemoNote/DemoNote';
 import NoteBookList from './components/NoteBookList/NotebookList';
 import PrivateRoute from './components/PrivateRoute/PrivateRoute';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -35,7 +36,8 @@ function App() {
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/welcome" element={<PrivateRoute><Welcome /></PrivateRoute>} />
-          <Route path="/notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
+          <Route path="/notebook" element={<PrivateRoute><Notebook /></PrivateRoute>} />
+          <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
           <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
         </Routes>
         </div>

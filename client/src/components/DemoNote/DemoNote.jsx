@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { createRoot } from 'react-dom/client';
+import React, { useState, useRef } from 'react';
 import {
   Layout,
   Button,
@@ -11,17 +9,13 @@ import {
   Message,
   Modal,
   Upload,
-  Progress,
-  List,
-  Dropdown,
-  Menu
+  Progress
 } from '@arco-design/web-react';
 import {
   IconPlus,
   IconArrowLeft,
   IconArrowRight,
-  IconSend,
-  IconMore
+  IconSend
 } from '@arco-design/web-react/icon';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -30,207 +24,45 @@ import './DemoNote.css';
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
-const DemoNotebook = () => {
-  const { state } = useLocation();
+const DemoNote = () => {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: '你好！我是MindForge助手，有什么可以帮你的吗？',
+      content: '你好！这是演示模式，所有数据都是模拟的。',
+      timestamp: new Date().toLocaleTimeString()
+    },
+    {
+      role: 'user',
+      content: '这是一个演示消息',
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const [uploadModalVisible, setUploadModalVisible] = useState(state?.showUploadModal || false);
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [sources, setSources] = useState([]);
-
-  const fetchSources = useCallback(async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/sources?folderName=${encodeURIComponent(state?.libraryName || 'default')}&slug=${state?.slug || ''}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSources(data.map(source => ({
-          icon: '📄',
-          label: source.file_name,
-          url: source.file_url
-        })));
-      }
-    } catch (error) {
-      console.error('获取源文件列表失败:', error);
-      Message.error('获取源文件列表失败');
-    }
-  }, [state?.libraryName, state?.slug]);
-
-  const fetchNotes = useCallback(async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/notes?folderName=${encodeURIComponent(state?.libraryName || 'default')}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setNotes(data.map(note => ({
-          id: note.id,
-          title: note.title,
-          content: note.content,
-          icon: '📝'
-        })));
-      }
-    } catch (error) {
-      console.error('获取笔记列表失败:', error);
-      Message.error('获取笔记列表失败');
-    }
-  }, [state?.libraryName]);
-
-  useEffect(() => {
-    if (state?.showUploadModal) {
-      setUploadModalVisible(true);
-    }
-    fetchSources();
-    fetchNotes();
-  }, [state?.showUploadModal, fetchSources, fetchNotes]);
-
-  const handleUpload = async (file) => {
-    if (!file) {
-      const container = document.createElement('div');
-      const root = createRoot(container);
-      root.render(<Message type="error">请选择要上传的文件</Message>);
-      document.body.appendChild(container);
-      setTimeout(() => {
-        root.unmount();
-        document.body.removeChild(container);
-      }, 3000);
-      return;
-    }
-
-    setUploading(true);
-    setUploadProgress(0);
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('userId', localStorage.getItem('userId'));
-    formData.append('libraryName', state?.libraryName || 'default');
-    formData.append('fileName', encodeURIComponent(file.name));
-
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(progress);
-        }
-      });
-
-      xhr.open('POST', 'http://localhost:3001/api/sources/upload');
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
-      xhr.send(formData);
-
-      const response = await new Promise((resolve, reject) => {
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve({
-              ok: true,
-              json: () => Promise.resolve(JSON.parse(xhr.responseText))
-            });
-          } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`));
-          }
-        };
-        xhr.onerror = () => reject(new Error('Network error'));
-      });
-
-      const result = await response.json();
-      if (result.fileUrl) {
-        const container = document.createElement('div');
-        const root = createRoot(container);
-        root.render(<Message type="success">文件上传成功</Message>);
-        document.body.appendChild(container);
-        setTimeout(() => {
-          root.unmount();
-          document.body.removeChild(container);
-        }, 3000);
-        setUploadModalVisible(false);
-        await fetchSources();
-      } else {
-        throw new Error('文件上传成功但未返回文件URL');
-      }
-    } catch (error) {
-      console.error('文件上传失败:', error);
-      const container = document.createElement('div');
-      const root = createRoot(container);
-      root.render(<Message type="error">{error.message || '文件上传失败，请稍后重试'}</Message>);
-      document.body.appendChild(container);
-      setTimeout(() => {
-        root.unmount();
-        document.body.removeChild(container);
-      }, 3000);
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  const toggleLeftPanel = () => setLeftCollapsed(!leftCollapsed);
-  const toggleRightPanel = () => setRightCollapsed(!rightCollapsed);
+  const [sources, setSources] = useState([
+    { icon: '📄', label: '演示文档1.pdf', url: '#' },
+    { icon: '📄', label: '演示文档2.docx', url: '#' }
+  ]);
+  const [notes, setNotes] = useState([
+    { id: 1, title: '演示笔记1', content: '这是第一个演示笔记', icon: '📝' },
+    { id: 2, title: '演示笔记2', content: '这是第二个演示笔记', icon: '📝' }
+  ]);
   const [showEditor, setShowEditor] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isReadOnly, setIsReadOnly] = useState(false);
 
-  const [notes, setNotes] = useState([]);
+  const toggleLeftPanel = () => setLeftCollapsed(!leftCollapsed);
+  const toggleRightPanel = () => setRightCollapsed(!rightCollapsed);
 
-  const handleListResize = useCallback(() => {
-    let rafId;
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-      rafId = null;
-    };
-    
-    if (!rafId) {
-      rafId = requestAnimationFrame(scrollToBottom);
-    }
-    
-    return () => {
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(handleListResize);
-    const messageContainer = document.querySelector('.message-container');
-    
-    if (messageContainer) {
-      resizeObserver.observe(messageContainer);
-    }
-
-    return () => {
-      if (messageContainer) {
-        resizeObserver.unobserve(messageContainer);
-      }
-      resizeObserver.disconnect();
-    };
-  }, [handleListResize]);
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!inputValue.trim()) return;
-
-    if (!state?.slug) {
-      Message.error('工作区slug是必需的');
-      return;
-    }
 
     const userMessage = {
       role: 'user',
@@ -241,100 +73,42 @@ const DemoNotebook = () => {
     setInputValue('');
     setIsLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:3001/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          message: inputValue,
-          conversationId: localStorage.getItem('userId'),
-          slug: state?.slug,
-          mode: 'chat',
-          attachments: []
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
+    setTimeout(() => {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.textResponse,
-        timestamp: new Date().toLocaleTimeString(),
-        metrics: data.metrics,
-        sources: data.sources
-      }]);
-    } catch (error) {
-      console.error('Error:', error);
-      Message.error('发送消息失败');
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: '抱歉，发生了一些错误，请稍后再试。',
+        content: '这是模拟的AI回复',
         timestamp: new Date().toLocaleTimeString()
       }]);
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
-  // 获取聊天历史
-  const fetchChatHistory = useCallback(async () => {
-    if (!state?.slug) return;
-    
-    try {
-      const response = await fetch(`http://localhost:3001/api/chat/${state.slug}/history?limit=100&orderBy=asc&apiSessionId=${localStorage.getItem('userId')}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+  const handleUpload = (file) => {
+    setUploading(true);
+    setUploadProgress(0);
+    let hasShownMessage = false;
+
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setUploading(false);
+          setUploadModalVisible(false);
+          if (!hasShownMessage) {
+            Message.success('演示上传完成');
+            hasShownMessage = true;
+            setSources(prev => [...prev, { 
+              icon: '📄', 
+              label: file.name, 
+              url: '#' 
+            }]);
+          }
+          return 100;
+        }
+        return prev + 10;
       });
-
-      if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const formattedMessages = data.history.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.sentAt * 1000).toLocaleTimeString(),
-        metrics: msg.metrics,
-        sources: msg.sources
-      }));
-
-      setMessages([{
-        role: 'assistant',
-        content: '你好！我是MindForge助手，有什么可以帮你的吗？',
-        timestamp: new Date().toLocaleTimeString()
-      }, ...formattedMessages]);
-    } catch (error) {
-      console.error('获取聊天历史失败:', error);
-      Message.error('获取聊天历史失败');
-    }
-  }, [state?.slug]);
-
-  useEffect(() => {
-    fetchChatHistory();
-    
-    const handleBackButton = () => {
-      window.history.pushState(null, '', '/note-book-list');
-      window.location.reload();
-    };
-    
-    window.addEventListener('popstate', handleBackButton);
-    
-    return () => {
-      window.removeEventListener('popstate', handleBackButton);
-    };
-  }, [fetchChatHistory]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    }, 300);
+  };
 
   return (
     <Layout className="demo-notebook-layout">
@@ -370,41 +144,13 @@ const DemoNotebook = () => {
         )}
 
         <div className="source-list">
-          {sources.length === 0 ? (
-            <div className="empty-source" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px',
-              textAlign: 'center',
-              color: 'var(--color-text-3)'
-            }}>
-              {leftCollapsed ? (
-                <IconPlus style={{ fontSize: 24 }} />
-              ) : (
-                <>
-                  <IconPlus style={{ fontSize: 32, marginBottom: 16 }} />
-                  <Typography.Text>添加源以开始</Typography.Text>
-                  <Button
-                    type="primary"
-                    style={{ marginTop: 16 }}
-                    onClick={() => setUploadModalVisible(true)}
-                  >
-                    上传源
-                  </Button>
-                </>
-              )}
-            </div>
-          ) : (
-            sources.map((item, idx) =>
-              leftCollapsed ? (
-                <div key={idx} className="source-icon">{item.icon}</div>
-              ) : (
-                <div key={idx} className="source-item">
-                  {item.icon} {item.label}
-                </div>
-              )
+          {sources.map((item, idx) =>
+            leftCollapsed ? (
+              <div key={idx} className="source-icon">{item.icon}</div>
+            ) : (
+              <div key={idx} className="source-item">
+                {item.icon} {item.label}
+              </div>
             )
           )}
         </div>
@@ -414,7 +160,7 @@ const DemoNotebook = () => {
           onClick={toggleLeftPanel}
           size="mini"
           shape="circle"
-          className="collapse-btn left"
+          className="demo-collapse-btn left"
         />
       </Sider>
 
@@ -422,7 +168,7 @@ const DemoNotebook = () => {
       <Content className="content-panel">
         <div className="chat-area">
           <Title heading={5} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            👋 MindForge 聊天
+            👋 演示模式
           </Title>
 
           <div className="message-container">
@@ -450,7 +196,7 @@ const DemoNotebook = () => {
             <Input.TextArea
               value={inputValue}
               onChange={setInputValue}
-              placeholder="输入您的问题..."
+              placeholder="输入演示消息..."
               allowClear
               autoSize={{ minRows: 1, maxRows: 4 }}
               className="chat-input"
@@ -525,58 +271,21 @@ const DemoNotebook = () => {
               <Text style={{ flex: 1 }}>笔记</Text>
               <div>
                 {showEditor ? (
-                  <Button type="text" size="mini" shape="fill" className="icon-button" onClick={async () => {
-                    if (isReadOnly) {
-                      setShowEditor(false);
-                      await fetchNotes();
-                      return;
-                    }
-                    if (!title.trim() && !content.trim()) {
-                      setShowEditor(false);
-                      await fetchNotes();
-                      return;
+                  <Button type="text" size="mini" shape="fill" className="icon-button" onClick={() => {
+                    if (!isReadOnly && title && content) {
+                      const newNote = {
+                        id: notes.length + 1,
+                        title: title,
+                        content: content,
+                        icon: '📝'
+                      };
+                      setNotes([...notes, newNote]);
                     }
                     setShowEditor(false);
-                    try {
-                      const response = await fetch('http://localhost:3001/api/notes', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        },
-                        body: JSON.stringify({
-                          title,
-                          content,
-                          folderName: state?.libraryName || 'default'
-                        })
-                      });
-                      if (response.ok) {
-                        Message.success('笔记保存成功');
-                        await fetchNotes();
-                      } else {
-                        throw new Error('保存失败');
-                      }
-                    } catch (error) {
-                      console.error('保存笔记失败:', error);
-                      Message.error('保存笔记失败');
-                    }
+                    setTitle('');
+                    setContent('');
                   }}>{isReadOnly ? '返回' : '保存'}</Button>
-                ) : !rightCollapsed ? null : (
-                  <Button
-                    icon={<IconPlus />}
-                    size="mini"
-                    shape="fill"
-                    type="text"
-                    className="icon-button"
-                    onClick={() => {
-                      setRightCollapsed(false);
-                      setShowEditor(true);
-                      setIsReadOnly(false);
-                      setTitle('');
-                      setContent('');
-                    }}
-                  />
-                )}
+                ) : null}
               </div>
             </div>
             {!showEditor && (
@@ -587,353 +296,59 @@ const DemoNotebook = () => {
                   setTitle('');
                   setContent('');
                 }}>添加注释</Button>
-                <Button type="outline" onClick={async () => {
-                  setShowEditor(true);
-                  setIsReadOnly(true);
-                  setTitle('学习指南');
-                  setContent('加载中...');
-                  try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                      },
-                      body: JSON.stringify({
-                        message: '请给我对所有资源文档包括注释内容的学习指南',
-                        slug: state?.slug || 'default',
-                        mode: 'chat',
-                        title: '学习指南'
-                      })
-                    });
-                    
-                    if (!response.ok) {
-                      throw new Error(`API响应状态: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    Message.success('学习指南生成成功');
-                    setMessages(prev => [...prev, {
-                      role: 'assistant',
-                      content: data.textResponse,
-                      timestamp: new Date().toLocaleTimeString()
-                    }]);
-                    setContent(data.textResponse);
-                    await fetchNotes();
-                  } catch (error) {
-                    console.error('生成学习指南失败:', error);
-                    Message.error('生成学习指南失败');
-                    setShowEditor(false);
-                  }
-                }}>学习指南</Button>
-                <Button type="outline" onClick={async () => {
-                  setShowEditor(true);
-                  setIsReadOnly(true);
-                  setTitle('文件内容总结');
-                  setContent('加载中...');
-                  try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                      },
-                      body: JSON.stringify({
-                        message: '请将每个文件文档的内容总结更改下',
-                        slug: state?.slug || 'default',
-                        mode: 'chat',
-                        title: '简报文件'
-                      })
-                    });
-                    
-                    if (!response.ok) {
-                      throw new Error(`API响应状态: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    Message.success('文件内容总结修改请求已发送');
-                    setMessages(prev => [...prev, {
-                      role: 'assistant',
-                      content: data.textResponse,
-                      timestamp: new Date().toLocaleTimeString()
-                    }]);
-                    setContent(data.textResponse);
-                    await fetchNotes();
-                  } catch (error) {
-                    console.error('修改文件内容总结失败:', error);
-                    Message.error('修改文件内容总结失败');
-                    setShowEditor(false);
-                  }
-                }}>简报文件</Button>
-                <Button type="outline" onClick={async () => {
-                  setShowEditor(true);
-                  setIsReadOnly(true);
-                  setTitle('常问问题');
-                  setContent('加载中...');
-                  try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                      },
-                      body: JSON.stringify({
-                        message: '请针对每个文件文档给我生成对他们内容可能会问的问题',
-                        slug: state?.slug || 'default',
-                        mode: 'chat',
-                        title: '常问问题'
-                      })
-                    });
-                    
-                    if (!response.ok) {
-                      throw new Error(`API响应状态: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    Message.success('问题生成成功');
-                    setMessages(prev => [...prev, {
-                      role: 'assistant',
-                      content: data.textResponse,
-                      timestamp: new Date().toLocaleTimeString()
-                    }]);
-                    setContent(data.textResponse);
-                    await fetchNotes();
-                  } catch (error) {
-                    console.error('生成问题失败:', error);
-                    Message.error('生成问题失败');
-                    setShowEditor(false);
-                  }
-                }}>常问问题</Button>
-                <Button type="outline" onClick={async () => {
-                  setShowEditor(true);
-                  setIsReadOnly(true);
-                  setTitle('时间线');
-                  setContent('加载中...');
-                  try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                      },
-                      body: JSON.stringify({
-                        message: '对从聊天开始的所有对话以及文档上传，注释添加总结成时间线 详细展示给我',
-                        slug: state?.slug || 'default',
-                        mode: 'chat',
-                        title: '时间线'
-                      })
-                    });
-                    
-                    if (!response.ok) {
-                      throw new Error(`API响应状态: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    Message.success('时间线生成成功');
-                    setMessages(prev => [...prev, {
-                      role: 'assistant',
-                      content: data.textResponse,
-                      timestamp: new Date().toLocaleTimeString()
-                    }]);
-                    setContent(data.textResponse);
-                    await fetchNotes();
-                  } catch (error) {
-                    console.error('生成时间线失败:', error);
-                    Message.error('生成时间线失败');
-                    setShowEditor(false);
-                  }
-                }}>时间线</Button>
               </div>
             )}
             {showEditor ? (
-              <div>
+              <div className="note-editor">
                 <Input
-                  placeholder="注释标题"
                   value={title}
                   onChange={setTitle}
-                  allowClear
-                  readOnly={isReadOnly}
-                  className="sider-search"
+                  placeholder="标题"
+                  disabled={isReadOnly}
                 />
-                <div style={{ marginTop: 0 }}>
-                  <div style={{ flex: 1, minHeight: 0, marginBottom: 24 }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={content}
-                    onChange={setContent}
-                    readOnly={isReadOnly}
-                    style={{ height: 295 }}
-                  />
-                </div>
-                  <div style={{ 
-                    marginTop: 110,
-                    display: 'flex', 
-                    gap: 8,
-                    paddingBottom: 16,
-                    justifyContent: 'flex-end'
-                  }}>
-                    <Button type="outline" onClick={async () => {
-                      try {
-                        const response = await fetch('http://localhost:3001/api/sources/convert', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                          },
-                          body: JSON.stringify({
-                            fileName: title,
-                            fileContent: content,
-                            userId: localStorage.getItem('userId'),
-                            libraryName: state?.libraryName || 'default'
-                          })
-                        });
-                        if (response.ok) {
-                          Message.success('转换成功');
-                          await fetchSources();
-                        } else {
-                          throw new Error('转换失败');
-                        }
-                      } catch (error) {
-                        console.error('转换失败:', error);
-                        Message.error('转换失败');
-                      }
-                    }}>转换成源</Button>
-                  </div>
-                </div>
+                <ReactQuill
+                  value={content}
+                  onChange={setContent}
+                  readOnly={isReadOnly}
+                  modules={{
+                    toolbar: !isReadOnly
+                  }}
+                />
               </div>
             ) : (
-              <List className="note-list">
-                {notes.map((note, idx) => (
-                  <List.Item 
-                    key={idx} 
-                    className="note-item"
-                  >
-                    <div className="note-title" onClick={() => {
-                      setTitle(note.title);
-                      setContent(note.content);
-                      setShowEditor(true);
-                      setIsReadOnly(true);
-                    }}>
-                      <Typography.Title heading={6} style={{ margin: 0 }}>
-                        {note.icon} {note.title}
-                      </Typography.Title>
-                    </div>
-                    <Typography.Text type="secondary" className="note-text">
-                      {note.content.replace(/<[^>]*>/g, '')}
-                    </Typography.Text>
-                    <Dropdown
-                      droplist={
-                        <Menu>
-                          <Menu.Item key="edit" onClick={() => {
-                            Modal.confirm({
-                              title: '编辑标题',
-                              content: (
-                                <Input 
-                                  defaultValue={note.title}
-                                  onChange={(value) => setTitle(value)}
-                                />
-                              ),
-                              onOk: async () => {
-                                try {
-                                  const response = await fetch(`http://localhost:3001/api/notes/${note.id}`, {
-                                    method: 'PUT',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                                    },
-                                    body: JSON.stringify({
-                                      title: title || note.title,
-                                      content: note.content
-                                    })
-                                  });
-                                  if (response.ok) {
-                                    Message.success('标题更新成功');
-                                    await fetchNotes();
-                                  } else {
-                                    throw new Error('更新失败');
-                                  }
-                                } catch (error) {
-                                  console.error('更新标题失败:', error);
-                                  Message.error('更新标题失败');
-                                }
-                              }
-                            });
-                          }}>编辑标题</Menu.Item>
-                          <Menu.Item key="delete" onClick={async () => {
-                            try {
-                              const response = await fetch(`http://localhost:3001/api/notes/${note.id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                                },
-                              });
-                              if (response.ok) {
-                                Message.success('删除成功');
-                                await fetchNotes();
-                              } else {
-                                throw new Error('删除失败');
-                              }
-                            } catch (error) {
-                              console.error('删除笔记失败:', error);
-                              Message.error('删除笔记失败');
-                            }
-                          }}>删除</Menu.Item>
-                        </Menu>
-                      }
-                      trigger="click"
-                      position="br"
-                      getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                    >
-                      <Button type="text" icon={<IconMore />} />
-                    </Dropdown>
-                  </List.Item>
+              <div className="note-list">
+                {notes.map(note => (
+                  <div key={note.id} className="note-item" onClick={() => {
+                    setShowEditor(true);
+                    setIsReadOnly(true);
+                    setTitle(note.title);
+                    setContent(note.content);
+                  }}>
+                    <div className="note-icon">{note.icon}</div>
+                    <div className="note-title">{note.title}</div>
+                    <div className="note-content"> {note.content.replace(/<[^>]*>/g, '')}</div>
+                  </div>
                 ))}
-              </List>
+              </div>
             )}
           </>
         ) : (
-          <>
-            <div className="sider-header">
-              <Button
-                icon={<IconPlus />}
-                size="mini"
-                shape="fill"
-                type="text"
-                className="icon-button"
-                onClick={() => {
-                  setRightCollapsed(false);
-                  setShowEditor(true);
-                  setIsReadOnly(false);
-                  setTitle('');
-                  setContent('');
-                }}
-              />
-            </div>
-            <div className="source-list">
-              {notes.map((note, idx) =>
-                <div key={idx} className="source-icon" onClick={() => {
-                  setRightCollapsed(false);
-                  setShowEditor(true);
-                  setIsReadOnly(true);
-                  setTitle(note.title);
-                  setContent(note.content);
-                }}>{note.icon}</div>
-              )}
-            </div>
-          </>
+          <div className="note-icons">
+            {notes.map(note => (
+              <div key={note.id} className="note-icon">{note.icon}</div>
+            ))}
+          </div>
         )}
-
         <Button
-          icon={rightCollapsed ? <IconArrowLeft /> : <IconArrowRight />}
+          icon={rightCollapsed ? <IconArrowRight /> : <IconArrowLeft />}
           onClick={toggleRightPanel}
           size="mini"
           shape="circle"
-          className="collapse-btn right"
+          className="demo-collapse-btn right"
         />
       </Sider>
     </Layout>
   );
 };
 
-export default DemoNotebook;
+export default DemoNote;

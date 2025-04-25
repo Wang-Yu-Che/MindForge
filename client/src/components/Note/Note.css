@@ -242,7 +242,7 @@
     margin-bottom: 4px;
   }
   
-  .demo-collapse-btn {
+  .collapse-btn {
     position: absolute;
     bottom: 50%;
     transform: translateY(50%);
@@ -259,16 +259,15 @@
     cursor: pointer;
   }
   
-  .demo-collapse-btn.left {
+  .collapse-btn.left {
     right: -12px;
     transform: translateY(50%);
   }
   
-  .demo-collapse-btn.right {
+  .collapse-btn.right {
     left: -12px;
-    transform: translateY(50%) rotate(180deg);
+    transform: translateY(50%);
   }
-  
   .sider-panel.collapsed,
   .right-panel.collapsed {
     padding: 16px 12px;
