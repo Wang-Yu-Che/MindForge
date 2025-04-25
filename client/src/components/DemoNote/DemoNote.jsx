@@ -44,7 +44,6 @@ const DemoNotebook = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const [conversationId] = useState(Date.now().toString());
   const [uploadModalVisible, setUploadModalVisible] = useState(state?.showUploadModal || false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -52,7 +51,7 @@ const DemoNotebook = () => {
 
   const fetchSources = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/sources?folderName=${encodeURIComponent(state?.libraryName || 'default')}`, {
+      const response = await fetch(`http://localhost:3001/api/sources?folderName=${encodeURIComponent(state?.libraryName || 'default')}&slug=${state?.slug || ''}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -69,7 +68,7 @@ const DemoNotebook = () => {
       console.error('获取源文件列表失败:', error);
       Message.error('获取源文件列表失败');
     }
-  }, [state?.libraryName]);
+  }, [state?.libraryName, state?.slug]);
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -189,9 +188,49 @@ const DemoNotebook = () => {
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const [notes, setNotes] = useState([]);
-  
+
+  const handleListResize = useCallback(() => {
+    let rafId;
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+      rafId = null;
+    };
+    
+    if (!rafId) {
+      rafId = requestAnimationFrame(scrollToBottom);
+    }
+    
+    return () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(handleListResize);
+    const messageContainer = document.querySelector('.message-container');
+    
+    if (messageContainer) {
+      resizeObserver.observe(messageContainer);
+    }
+
+    return () => {
+      if (messageContainer) {
+        resizeObserver.unobserve(messageContainer);
+      }
+      resizeObserver.disconnect();
+    };
+  }, [handleListResize]);
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
+
+    if (!state?.slug) {
+      Message.error('工作区slug是必需的');
+      return;
+    }
 
     const userMessage = {
       role: 'user',
@@ -211,8 +250,10 @@ const DemoNotebook = () => {
         },
         body: JSON.stringify({
           message: inputValue,
-          conversationId: conversationId,
-          history: messages.filter(msg => msg.role !== 'system')
+          conversationId: localStorage.getItem('userId'),
+          slug: state?.slug,
+          mode: 'chat',
+          attachments: []
         }),
       });
 
@@ -223,8 +264,10 @@ const DemoNotebook = () => {
       const data = await response.json();
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.response,
-        timestamp: new Date().toLocaleTimeString()
+        content: data.textResponse,
+        timestamp: new Date().toLocaleTimeString(),
+        metrics: data.metrics,
+        sources: data.sources
       }]);
     } catch (error) {
       console.error('Error:', error);
@@ -238,6 +281,45 @@ const DemoNotebook = () => {
       setIsLoading(false);
     }
   };
+
+  // 获取聊天历史
+  const fetchChatHistory = useCallback(async () => {
+    if (!state?.slug) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/chat/${state.slug}/history?limit=100&orderBy=asc&apiSessionId=${localStorage.getItem('userId')}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const formattedMessages = data.history.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.sentAt * 1000).toLocaleTimeString(),
+        metrics: msg.metrics,
+        sources: msg.sources
+      }));
+
+      setMessages([{
+        role: 'assistant',
+        content: '你好！我是MindForge助手，有什么可以帮你的吗？',
+        timestamp: new Date().toLocaleTimeString()
+      }, ...formattedMessages]);
+    } catch (error) {
+      console.error('获取聊天历史失败:', error);
+      Message.error('获取聊天历史失败');
+    }
+  }, [state?.slug]);
+
+  useEffect(() => {
+    fetchChatHistory();
+  }, [fetchChatHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -388,7 +470,6 @@ const DemoNotebook = () => {
           >
             <Upload
               drag
-              accept=".txt,.pdf,.doc,.docx"
               showUploadList={false}
               customRequest={({ file }) => handleUpload(file)}
             >
@@ -436,12 +517,15 @@ const DemoNotebook = () => {
                   <Button type="text" size="mini" shape="fill" className="icon-button" onClick={async () => {
                     if (isReadOnly) {
                       setShowEditor(false);
+                      await fetchNotes();
                       return;
                     }
                     if (!title.trim() && !content.trim()) {
                       setShowEditor(false);
+                      await fetchNotes();
                       return;
                     }
+                    setShowEditor(false);
                     try {
                       const response = await fetch('http://localhost:3001/api/notes', {
                         method: 'POST',
@@ -456,7 +540,6 @@ const DemoNotebook = () => {
                         })
                       });
                       if (response.ok) {
-                        setShowEditor(false);
                         Message.success('笔记保存成功');
                         await fetchNotes();
                       } else {
@@ -493,10 +576,162 @@ const DemoNotebook = () => {
                   setTitle('');
                   setContent('');
                 }}>添加注释</Button>
-                <Button type="outline">学习指南</Button>
-                <Button type="outline">简报文件</Button>
-                <Button type="outline">常问问题</Button>
-                <Button type="outline">时间线</Button>
+                <Button type="outline" onClick={async () => {
+                  setShowEditor(true);
+                  setIsReadOnly(true);
+                  setTitle('学习指南');
+                  setContent('加载中...');
+                  try {
+                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({
+                        message: '请给我对所有资源文档包括注释内容的学习指南',
+                        slug: state?.slug || 'default',
+                        mode: 'chat',
+                        title: '学习指南'
+                      })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error(`API响应状态: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    Message.success('学习指南生成成功');
+                    setMessages(prev => [...prev, {
+                      role: 'assistant',
+                      content: data.textResponse,
+                      timestamp: new Date().toLocaleTimeString()
+                    }]);
+                    setContent(data.textResponse);
+                    await fetchNotes();
+                  } catch (error) {
+                    console.error('生成学习指南失败:', error);
+                    Message.error('生成学习指南失败');
+                    setShowEditor(false);
+                  }
+                }}>学习指南</Button>
+                <Button type="outline" onClick={async () => {
+                  setShowEditor(true);
+                  setIsReadOnly(true);
+                  setTitle('文件内容总结');
+                  setContent('加载中...');
+                  try {
+                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({
+                        message: '请将每个文件文档的内容总结更改下',
+                        slug: state?.slug || 'default',
+                        mode: 'chat',
+                        title: '简报文件'
+                      })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error(`API响应状态: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    Message.success('文件内容总结修改请求已发送');
+                    setMessages(prev => [...prev, {
+                      role: 'assistant',
+                      content: data.textResponse,
+                      timestamp: new Date().toLocaleTimeString()
+                    }]);
+                    setContent(data.textResponse);
+                    await fetchNotes();
+                  } catch (error) {
+                    console.error('修改文件内容总结失败:', error);
+                    Message.error('修改文件内容总结失败');
+                    setShowEditor(false);
+                  }
+                }}>简报文件</Button>
+                <Button type="outline" onClick={async () => {
+                  setShowEditor(true);
+                  setIsReadOnly(true);
+                  setTitle('常问问题');
+                  setContent('加载中...');
+                  try {
+                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({
+                        message: '请针对每个文件文档给我生成对他们内容可能会问的问题',
+                        slug: state?.slug || 'default',
+                        mode: 'chat',
+                        title: '常问问题'
+                      })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error(`API响应状态: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    Message.success('问题生成成功');
+                    setMessages(prev => [...prev, {
+                      role: 'assistant',
+                      content: data.textResponse,
+                      timestamp: new Date().toLocaleTimeString()
+                    }]);
+                    setContent(data.textResponse);
+                    await fetchNotes();
+                  } catch (error) {
+                    console.error('生成问题失败:', error);
+                    Message.error('生成问题失败');
+                    setShowEditor(false);
+                  }
+                }}>常问问题</Button>
+                <Button type="outline" onClick={async () => {
+                  setShowEditor(true);
+                  setIsReadOnly(true);
+                  setTitle('时间线');
+                  setContent('加载中...');
+                  try {
+                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({
+                        message: '对从聊天开始的所有对话以及文档上传，注释添加总结成时间线 详细展示给我',
+                        slug: state?.slug || 'default',
+                        mode: 'chat',
+                        title: '时间线'
+                      })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error(`API响应状态: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    Message.success('时间线生成成功');
+                    setMessages(prev => [...prev, {
+                      role: 'assistant',
+                      content: data.textResponse,
+                      timestamp: new Date().toLocaleTimeString()
+                    }]);
+                    setContent(data.textResponse);
+                    await fetchNotes();
+                  } catch (error) {
+                    console.error('生成时间线失败:', error);
+                    Message.error('生成时间线失败');
+                    setShowEditor(false);
+                  }
+                }}>时间线</Button>
               </div>
             )}
             {showEditor ? (
@@ -637,6 +872,7 @@ const DemoNotebook = () => {
                       }
                       trigger="click"
                       position="br"
+                      getPopupContainer={(triggerNode) => triggerNode.parentNode}
                     >
                       <Button type="text" icon={<IconMore />} />
                     </Dropdown>

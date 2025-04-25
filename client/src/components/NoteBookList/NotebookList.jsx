@@ -65,8 +65,8 @@ const NoteBookList = () => {
         throw new Error('创建笔记本失败');
       }
       
-      await response.json();
-      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
+      const data = await response.json();
+      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim(), slug: data.slug } });
       setVisible(false);
       setLibraryName('');
     } catch (error) {
@@ -93,12 +93,17 @@ const NoteBookList = () => {
           throw new Error('获取笔记本数据失败');
         }
         const notebooks = await response.json();
+          // 检查是否为空
+          if (notebooks.length === 0) {
+            navigate('/welcome');
+          }
         const formattedData = notebooks.map((item) => ({
           key: item.id.toString(),
           title: item.title || '无标题笔记本',
           source: item.source_count ? `${item.source_count} 个来源` : '0 个来源',
           date: new Date(item.created_at).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          role: item.role
+          role: item.role,
+          slug: item.slug
         }));
         setData(formattedData);
       } catch (err) {
@@ -110,7 +115,7 @@ const NoteBookList = () => {
     };
 
     fetchNotebooks();
-  }, []);
+  }, [navigate]);
 
 
 
@@ -319,7 +324,7 @@ const NoteBookList = () => {
               onClick: (e) => {
                 // 阻止事件冒泡，避免与菜单项点击冲突
                 if (!e.target.closest('.arco-dropdown-menu, .arco-btn')) {
-                  navigate('/demo-notebook', { state: { libraryName: record.title } });
+                  navigate('/demo-notebook', { state: { libraryName: record.title, slug: record.slug } });
                 }
               }
             })}
@@ -363,6 +368,38 @@ const NoteBookList = () => {
             });
             setData(updatedData);
             setEditModalVisible(false);
+            // 刷新数据
+            const fetchNotebooks = async () => {
+              try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:3001/api/notebooks', {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+                if (!response.ok) {
+                  throw new Error('获取笔记本数据失败');
+                }
+                const notebooks = await response.json();
+                const formattedData = notebooks.map((item) => ({
+                  key: item.id.toString(),
+                  title: item.title || '无标题笔记本',
+                  source: item.source_count ? `${item.source_count} 个来源` : '0 个来源',
+                  date: new Date(item.created_at).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                  role: item.role,
+                  slug: item.slug
+                }));
+                setData(formattedData);
+                // 检查是否为空
+                if (formattedData.length === 0) {
+                  navigate('/welcome');
+                }
+              } catch (err) {
+                setError(err.message);
+                Message.error(err.message);
+              }
+            };
+            fetchNotebooks();
           } catch (err) {
             Message.error(err.message);
           }

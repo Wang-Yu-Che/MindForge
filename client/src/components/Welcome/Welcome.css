@@ -37,7 +37,8 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
-[data-theme='dark'] .feature-item h5 {
+[data-theme='dark'] .feature-item h5,
+[data-theme='dark'] .feature-item .arco-typography {
   color: #000000;
 }
 
@@ -63,6 +64,21 @@
 [data-theme='dark'] .feature-icon {
   background-color: #334155;
 }
+
+[data-theme='dark'] .arco-modal {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .arco-modal-header {
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .arco-modal-footer {
+  border-top-color: var(--border-color);
+}
+
+
 
 .welcome-actions {
   margin-top: 16px;

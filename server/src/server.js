@@ -3,7 +3,7 @@ import cors from 'cors';
 import fetch from 'node-fetch';
 import { registerUser, loginUser, updateUserAvatar } from './authService.js';
 import jwt from 'jsonwebtoken';
-import { jwtConfig } from './config.js';
+import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback } from './feedbackService.js';
 import { uploadSourceFile, getUserSources,saveSourceFile } from './sourceService.js';
@@ -23,77 +23,51 @@ app.use(authMiddleware);
 // 存储对话历史
 const conversations = new Map();
 
+// 聊天路由
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, conversationId, history } = req.body;
-    console.log('Received message:', message);
-    console.log('Conversation ID:', conversationId);
-
-    // 构建系统提示词
-    const systemPrompt = "你是一个有帮助的AI助手。请用简洁、专业的方式回答问题。";
-
-    // 构建完整的对话提示
-    let fullPrompt = systemPrompt + "\n\n";
-
-    // 添加对话历史
-    if (history && history.length > 0) {
-      history.forEach(msg => {
-        fullPrompt += `${msg.role === 'user' ? '用户' : 'AI助手'}: ${msg.content}\n`;
-      });
+    const { message, conversationId, slug, mode = 'chat', attachments = [] } = req.body;
+    if (!slug) {
+      throw new Error('工作区slug是必需的');
     }
 
-    // 添加当前问题
-    fullPrompt += `用户: ${message}\nAI助手:`;
-
-    const response = await fetch('http://localhost:11434/api/generate', {
+    const response = await fetch(`http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${anythingllmConfig.apiKey}`
       },
       body: JSON.stringify({
-        model: 'llama3.2:latest',
-        prompt: fullPrompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          top_p: 0.9,
-          max_tokens: 2000,
-          context_window: 4096,
-          repeat_penalty: 1.1
-        }
-      }),
+        message,
+        mode,
+        sessionId: conversationId,
+        attachments,
+        reset: false
+      })
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama API responded with status: ${response.status}`);
+      throw new Error(`AnythingLLM API responded with status: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Ollama response:', data);
+    console.log('AnythingLLM API请求详情:', {
+      url: response.url,
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      body: data
+    });
+    console.log('AnythingLLM response:', {
+      id: data.id,
+      type: data.type,
+      textResponse: data.textResponse,
+      sources: data.sources,
+      close: data.close,
+      error: data.error
+    });
 
-    // 保存对话历史
-    if (!conversations.has(conversationId)) {
-      conversations.set(conversationId, []);
-    }
-    const currentHistory = conversations.get(conversationId);
-    currentHistory.push(
-      { role: 'user', content: message },
-      { role: 'assistant', content: data.response }
-    );
-
-    // 限制历史记录长度
-    if (currentHistory.length > 20) {
-      currentHistory.splice(0, 2);
-    }
-
-    if (data && typeof data.response === 'string') {
-      res.json({ response: data.response });
-    } else {
-      console.error('Unexpected response format:', data);
-      res.json({ 
-        response: '抱歉，AI 响应格式不正确。这是原始响应：' + JSON.stringify(data) 
-      });
-    }
+    res.json(data);
 
   } catch (error) {
     console.error('Server error:', error);
@@ -101,6 +75,90 @@ app.post('/api/chat', async (req, res) => {
       error: 'Internal server error',
       message: error.message,
       details: error.stack
+    });
+  }
+});
+
+// 简化版聊天路由
+app.post('/api/chat/simple', async (req, res) => {
+  try {
+    const { message, slug, mode = 'chat', title, content } = req.body;
+    if (!slug) {
+      throw new Error('工作区slug是必需的');
+    }
+
+    let processedMessage = message;
+    if (title && content) {
+      processedMessage = `我要对该知识库进行注释 注释标题为${title} 注释内容为${content}`;
+    }
+
+    const response = await fetch(`http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${anythingllmConfig.apiKey}`
+      },
+      body: JSON.stringify({
+        message: processedMessage,
+        mode,
+        reset: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`AnythingLLM API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+      
+    // 根据按钮类型创建笔记
+    if (title && message) {
+      await createNote(req.user.userId, title, data.textResponse, req.body.slug);
+    }
+  
+    res.json({
+      title: title,
+      response: data.textResponse,
+      ...data
+    });
+
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// 获取工作区聊天历史
+app.get('/api/chat/:slug/history', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { apiSessionId, limit = 100, orderBy = 'desc' } = req.query;
+
+    const response = await fetch(`http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/chats?${new URLSearchParams({
+      apiSessionId: apiSessionId || '',
+      limit: limit.toString(),
+      orderBy
+    })}`, {
+      headers: {
+        'Authorization': `Bearer ${anythingllmConfig.apiKey}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`AnythingLLM API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+
+  } catch (error) {
+    console.error('获取聊天历史失败:', error);
+    res.status(500).json({ 
+      error: '获取聊天历史失败',
+      message: error.message
     });
   }
 });
@@ -182,7 +240,53 @@ app.get('/api/sources', async (req, res) => {
   try {
     const userId = req.user.userId;
     const folderName = req.query.folderName;
+    const slug = req.query.slug
     const sources = await getUserSources(userId, folderName);
+    
+    // 更新AnythingLLM的嵌入
+    if (slug) {
+      try {
+        const requestUrl = `http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/update-embeddings`;
+        const requestBody = {
+          adds: sources.map(source => source.location)
+        };
+        
+        console.log('AnythingLLM更新嵌入请求详情:', {
+          url: requestUrl,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${anythingllmConfig.apiKey}`
+          },
+          body: requestBody
+        });
+        
+        const response = await fetch(requestUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${anythingllmConfig.apiKey}`
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        const responseData = await response.json();
+        
+        console.log('AnythingLLM更新嵌入响应详情:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          body: responseData
+        });
+      
+        if (!response.ok) {
+          console.error('更新AnythingLLM嵌入失败:', await response.text());
+        }
+      } catch (error) {
+        console.error('更新AnythingLLM嵌入时出错:', error);
+      }
+    }
+    
     res.json(sources);
   } catch (error) {
     console.error('获取源文件列表失败:', error);
@@ -259,6 +363,21 @@ app.post('/api/notes', async (req, res) => {
     const userId = req.user.userId;
     const { title, content, folderName } = req.body;
     const noteId = await createNote(userId, title, content, folderName);
+    // 调用简化版聊天路由
+    await fetch('http://localhost:3001/api/chat/simple', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': req.headers.authorization
+      },
+      body: JSON.stringify({
+        message: '',
+        slug: folderName,
+        title,
+        content
+      })
+    });
+    
     res.json({ noteId });
   } catch (error) {
     console.error('创建笔记失败:', error);

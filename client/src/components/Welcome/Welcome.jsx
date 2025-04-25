@@ -41,8 +41,8 @@ const Welcome = () => {
         throw new Error('创建笔记本失败');
       }
       
-      await response.json();
-      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim() } });
+      const data = await response.json();
+      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim(), slug: data.slug } });
       setVisible(false);
       setLibraryName('');
     } catch (error) {
@@ -85,7 +85,7 @@ const Welcome = () => {
               <Space direction="vertical" className="feature-item" align="center">
                 <div className="feature-icon"><AiOutlineCloudUpload size={32} /></div>
                 <Typography.Title heading={5}>上传你的文档</Typography.Title>
-                <Typography.Text type="secondary" align="center">MindForge 将自动评估和理解您的文档内容并生成笔记</Typography.Text>
+                <Typography.Text type="secondary" align="center">将自动评估和理解您的文档内容并生成笔记</Typography.Text>
               </Space>
             </Grid.Col>
             <Grid.Col span={8}>
