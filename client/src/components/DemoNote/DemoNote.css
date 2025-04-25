@@ -268,6 +268,25 @@
     left: -12px;
     transform: translateY(50%) rotate(180deg);
   }
+
+  .mobile-toggle-btn {
+    position: fixed;
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    background: var(--color-bg-2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .mobile-toggle-btn.left {
+    left: 8px;
+    bottom: 16px;
+  }
+
+  .mobile-toggle-btn.right {
+    right: 8px;
+    bottom: 16px;
+  }
   
   .sider-panel.collapsed,
   .right-panel.collapsed {

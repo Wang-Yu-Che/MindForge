@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Layout,
   Button,
@@ -25,8 +25,9 @@ const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
 const DemoNote = () => {
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [leftCollapsed, setLeftCollapsed] = useState(window.innerWidth <= 768);
+  const [rightCollapsed, setRightCollapsed] = useState(window.innerWidth <= 768);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -110,8 +111,36 @@ const DemoNote = () => {
     }, 300);
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <Layout className="demo-notebook-layout">
+      {isMobile && (
+        <>
+          <Button 
+            className="mobile-toggle-btn left"
+            shape="circle"
+            size="mini"
+            onClick={() => setLeftCollapsed(!leftCollapsed)}
+          >
+            {leftCollapsed ? <IconArrowRight /> : <IconArrowLeft />}
+          </Button>
+          <Button 
+            className="mobile-toggle-btn right"
+            shape="circle"
+            size="mini"
+            onClick={() => setRightCollapsed(!rightCollapsed)}
+          >
+            {rightCollapsed ? <IconArrowRight /> : <IconArrowLeft />}
+          </Button>
+        </>
+      )}
       {/* 左侧面板 */}
       <Sider
         width={320}
