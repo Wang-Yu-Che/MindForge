@@ -168,6 +168,33 @@
     .right-panel {
       margin: 8px;
     }
+    
+    /* 移动端弹窗优化 */
+    .arco-modal-wrapper .arco-modal {
+      width: 90% !important;
+      max-width: 100%;
+      margin: 0 auto;
+      top: 20px;
+    }
+    
+    .arco-modal-wrapper .arco-modal-content {
+      padding: 16px;
+    }
+    
+    .arco-modal-wrapper .arco-modal-footer {
+      padding: 16px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .arco-modal-wrapper .arco-modal-footer button {
+      width: 100%;
+    }
+    
+    /* 上传区域优化 */
+    .arco-upload-drag {
+      padding: 16px;
+    }
   }
   
   .message-container {
