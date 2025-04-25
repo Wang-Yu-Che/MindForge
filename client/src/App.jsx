@@ -35,7 +35,7 @@ function App() {
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/welcome" element={<PrivateRoute><Welcome /></PrivateRoute>} />
-          <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
+          <Route path="/notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
           <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
         </Routes>
         </div>

@@ -66,7 +66,7 @@ const NoteBookList = () => {
       }
       
       const data = await response.json();
-      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim(), slug: data.slug } });
+      navigate('/notebook', { state: { showUploadModal: true, libraryName: libraryName.trim(), slug: data.slug } });
       setVisible(false);
       setLibraryName('');
     } catch (error) {
@@ -80,42 +80,42 @@ const NoteBookList = () => {
     setLibraryName('');
   };
 
-  useEffect(() => {
-    const fetchNotebooks = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3001/api/notebooks', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error('获取笔记本数据失败');
+  const fetchNotebooks = React.useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/notebooks', {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        const notebooks = await response.json();
-          // 检查是否为空
-          if (notebooks.length === 0) {
-            navigate('/welcome');
-          }
-        const formattedData = notebooks.map((item) => ({
-          key: item.id.toString(),
-          title: item.title || '无标题笔记本',
-          source: item.source_count ? `${item.source_count} 个来源` : '0 个来源',
-          date: new Date(item.created_at).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          role: item.role,
-          slug: item.slug
-        }));
-        setData(formattedData);
-      } catch (err) {
-        setError(err.message);
-        Message.error(err.message);
-      } finally {
-        setLoading(false);
+      });
+      if (!response.ok) {
+        throw new Error('获取笔记本数据失败');
       }
-    };
-
-    fetchNotebooks();
+      const notebooks = await response.json();
+        // 检查是否为空
+        if (notebooks.length === 0) {
+          navigate('/welcome');
+        }
+      const formattedData = notebooks.map((item) => ({
+        key: item.id.toString(),
+        title: item.title || '无标题笔记本',
+        source: item.source_count ? `${item.source_count} 个来源` : '0 个来源',
+        date: new Date(item.created_at).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        role: item.role,
+        slug: item.slug
+      }));
+      setData(formattedData);
+    } catch (err) {
+      setError(err.message);
+      Message.error(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
+
+  useEffect(() => {
+    fetchNotebooks();
+  }, [fetchNotebooks]);
 
 
 
@@ -167,8 +167,7 @@ const NoteBookList = () => {
                         }
                         Message.success('删除成功');
                         // 刷新列表
-                        const notebooks = data.filter(item => item.key !== record.key);
-                        setData(notebooks);
+                        fetchNotebooks();
                       } catch (err) {
                         Message.error(err.message);
                       }
@@ -224,8 +223,7 @@ const NoteBookList = () => {
                             }
                             Message.success('删除成功');
                             // 刷新列表
-                            const notebooks = data.filter(notebook => notebook.key !== item.key);
-                            setData(notebooks);
+                            fetchNotebooks();
                           } catch (err) {
                             Message.error(err.message);
                           }
@@ -324,7 +322,7 @@ const NoteBookList = () => {
               onClick: (e) => {
                 // 阻止事件冒泡，避免与菜单项点击冲突
                 if (!e.target.closest('.arco-dropdown-menu, .arco-btn')) {
-                  navigate('/demo-notebook', { state: { libraryName: record.title, slug: record.slug } });
+                  navigate('/notebook', { state: { libraryName: record.title, slug: record.slug } });
                 }
               }
             })}

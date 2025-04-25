@@ -149,7 +149,8 @@ const deleteNotebook = async (notebookId) => {
     
     // 删除关联的sources记录
     await connection.execute('DELETE FROM sources WHERE folder_name = ?', [notebook[0].title]);
-    
+    // 删除关联的notes记录
+    await connection.execute('DELETE FROM notes WHERE folder_name = ?', [notebook[0].title]);
     await connection.commit();
   } catch (error) {
     if (connection) {

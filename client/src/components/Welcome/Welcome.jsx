@@ -42,7 +42,7 @@ const Welcome = () => {
       }
       
       const data = await response.json();
-      navigate('/demo-notebook', { state: { showUploadModal: true, libraryName: libraryName.trim(), slug: data.slug } });
+      navigate('/notebook', { state: { showUploadModal: true, libraryName: libraryName.trim(), slug: data.slug } });
       setVisible(false);
       setLibraryName('');
     } catch (error) {

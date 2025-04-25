@@ -319,6 +319,17 @@ const DemoNotebook = () => {
 
   useEffect(() => {
     fetchChatHistory();
+    
+    const handleBackButton = () => {
+      window.history.pushState(null, '', '/note-book-list');
+      window.location.reload();
+    };
+    
+    window.addEventListener('popstate', handleBackButton);
+    
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
   }, [fetchChatHistory]);
 
   useEffect(() => {
