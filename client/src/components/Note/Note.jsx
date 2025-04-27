@@ -61,7 +61,8 @@ const DemoNotebook = () => {
         setSources(data.map(source => ({
           icon: '📄',
           label: source.file_name,
-          url: source.file_url
+          url: source.file_url,
+          location:source.location
         })));
       }
     } catch (error) {
@@ -421,10 +422,138 @@ const DemoNotebook = () => {
       {/* 中间聊天内容 */}
       <Content className="content-panel">
         <div className="chat-area">
-          <Title heading={5} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            👋 MindForge 聊天
-          </Title>
+          <Title heading={5} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>👋 MindForge 聊天</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button
+                size="mini"
+                onClick={async () => {
+                  try {
+                    const exportData = {
+                      version: '1.0',
+                      timestamp: new Date().toISOString(),
+                      messages,
+                      sources,
+                      notes,
+                      libraryName: state?.libraryName || 'default',
+                      slug: state?.slug
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `mindforge-notebook-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    Message.success('导出成功');
+                  } catch (error) {
+                    console.error('导出失败:', error);
+                    Message.error('导出失败');
+                  }
+                }}
+              >
+                导出
+              </Button>
+              <Button
+                size="mini"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.json';
+                  input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    try {
+                      const reader = new FileReader();
+                      reader.onload = async (e) => {
+                        try {
+                          const importData = JSON.parse(e.target.result);
+                        
+                          // 验证导入数据的格式
+                          if (!importData.version || !importData.timestamp) {
+                            throw new Error('无效的导入文件格式');
+                          }
 
+                          // 验证必要字段
+                          if (!Array.isArray(importData.messages) || !Array.isArray(importData.sources) || !Array.isArray(importData.notes)) {
+                            throw new Error('导入数据格式错误：缺少必要字段');
+                          }
+
+                          // 验证消息格式
+                          for (const msg of importData.messages) {
+                            if (!msg.role || !msg.content || !msg.timestamp) {
+                              throw new Error('导入数据格式错误：消息格式无效');
+                            }
+                          }
+
+                          // 验证来源格式
+                          for (const source of importData.sources) {
+                            if (!source.icon || !source.label || !source.url) {
+                              throw new Error('导入数据格式错误：来源格式无效');
+                            }
+                          }
+
+                          // 验证笔记格式
+                          for (const note of importData.notes) {
+                            if (!note.id || !note.title || !note.content || !note.icon) {
+                              throw new Error('导入数据格式错误：笔记格式无效');
+                            }
+                          }
+
+                          try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch('http://localhost:3001/api/notes/import', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: JSON.stringify({
+                                libraryName: state?.libraryName || 'default',
+                                slug: state?.slug,
+                                notes: importData.notes || [],
+                                messages: importData.messages || [],
+                                sources: importData.sources || []
+                              })
+                            });
+
+                            if (!response.ok) {
+                              throw new Error('导入数据保存失败');
+                            }
+
+                            const result = await response.json();
+                            setMessages(result.messages || []);
+                            setSources(result.sources || []);
+                            setNotes(result.notes || []);
+                            
+                            Message.success('导入成功并保存到数据库');
+                          } catch (error) {
+                            console.error('保存导入数据失败:', error);
+                            Message.error('导入数据保存失败');
+                          }
+                        } catch (error) {
+                          console.error('解析导入文件失败:', error);
+                          Message.error('导入失败：无效的文件格式');
+                        }
+                      };
+                      reader.readAsText(file);
+                    } catch (error) {
+                      console.error('导入失败:', error);
+                      Message.error('导入失败');
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                导入
+              </Button>
+            </div>
+          </Title>
           <div className="message-container">
             {messages.map((msg, idx) => (
               <div key={idx} className={`message ${msg.role}`}>
@@ -678,7 +807,7 @@ const DemoNotebook = () => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                       },
                       body: JSON.stringify({
-                        message: '请针对每个文件文档给我生成对他们内容可能会问的问题',
+                        message: '请针对每个文件文档给我生成他们对内容可能会问的问题',
                         slug: state?.slug || 'default',
                         mode: 'chat',
                         title: '常问问题'

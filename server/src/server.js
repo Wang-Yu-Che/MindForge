@@ -187,6 +187,41 @@ app.post('/api/auth', async (req, res) => {
   }
 });
 
+// 导入笔记本数据路由
+app.post('/api/notes/import', async (req, res) => {
+  try {
+    const { libraryName, slug, notes, messages, sources } = req.body;
+    const userId = req.user.userId;
+    // 保存笔记
+    for (const note of notes) {
+      await createNote(userId, note.title, note.content, libraryName);
+    }
+    // 保存源文件
+    for (const source of sources) {
+      await saveSourceFile({
+        fileName: source.label,
+        fileUrl: source.url,
+        userId,
+        folderName: libraryName,
+        location: source.location
+      });
+    }
+
+    res.json({
+      success: true,
+      notes,
+      messages,
+      sources
+    });
+  } catch (error) {
+    console.error('导入数据失败:', error);
+    res.status(500).json({
+      error: '导入数据失败',
+      message: error.message
+    });
+  }
+});
+
 // 反馈路由
 app.post('/api/feedback', async (req, res) => {
   try {
@@ -251,7 +286,7 @@ app.get('/api/sources', async (req, res) => {
           adds: sources.map(source => source.location)
         };
         
-        console.log('AnythingLLM更新嵌入请求详情:', {
+        /*console.log('AnythingLLM更新嵌入请求详情:', {
           url: requestUrl,
           method: 'POST',
           headers: {
@@ -259,7 +294,7 @@ app.get('/api/sources', async (req, res) => {
             'Authorization': `Bearer ${anythingllmConfig.apiKey}`
           },
           body: requestBody
-        });
+        });*/
         
         const response = await fetch(requestUrl, {
           method: 'POST',
@@ -272,12 +307,12 @@ app.get('/api/sources', async (req, res) => {
         
         const responseData = await response.json();
         
-        console.log('AnythingLLM更新嵌入响应详情:', {
+        /*console.log('AnythingLLM更新嵌入响应详情:', {
           status: response.status,
           statusText: response.statusText,
           headers: Object.fromEntries(response.headers.entries()),
           body: responseData
-        });
+        });*/
       
         if (!response.ok) {
           console.error('更新AnythingLLM嵌入失败:', await response.text());
