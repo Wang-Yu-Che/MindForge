@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Hero.css';
 
 const Hero = () => {
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/welcome');
+    }
+  }, [navigate]);
 
   return (
     <div className="hero">
