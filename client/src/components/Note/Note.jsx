@@ -51,7 +51,7 @@ const DemoNotebook = () => {
 
   const fetchSources = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/sources?folderName=${encodeURIComponent(state?.libraryName || 'default')}&slug=${state?.slug || ''}`, {
+      const response = await fetch(`http://localhost:3002/api/sources?folderName=${encodeURIComponent(state?.libraryName || 'default')}&slug=${state?.slug || ''}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -73,7 +73,7 @@ const DemoNotebook = () => {
 
   const fetchNotes = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/notes?folderName=${encodeURIComponent(state?.libraryName || 'default')}`, {
+      const response = await fetch(`http://localhost:3002/api/notes?folderName=${encodeURIComponent(state?.libraryName || 'default')}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -132,7 +132,7 @@ const DemoNotebook = () => {
         }
       });
 
-      xhr.open('POST', 'http://localhost:3001/api/sources/upload');
+      xhr.open('POST', 'http://localhost:3002/api/sources/upload');
       xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
       xhr.send(formData);
 
@@ -243,7 +243,7 @@ const DemoNotebook = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/chat', {
+      const response = await fetch('http://localhost:3002/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -288,7 +288,7 @@ const DemoNotebook = () => {
     if (!state?.slug) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/chat/${state.slug}/history?limit=100&orderBy=asc&apiSessionId=${localStorage.getItem('userId')}`, {
+      const response = await fetch(`http://localhost:3002/api/chat/${state.slug}/history?limit=100&orderBy=asc&apiSessionId=${localStorage.getItem('userId')}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -623,7 +623,7 @@ const DemoNotebook = () => {
 
                           try {
                             const token = localStorage.getItem('token');
-                            const response = await fetch('http://localhost:3001/api/notes/import', {
+                            const response = await fetch('http://localhost:3002/api/notes/import', {
                               method: 'POST',
                               headers: {
                                 'Content-Type': 'application/json',
@@ -783,7 +783,7 @@ const DemoNotebook = () => {
                     }
                     setShowEditor(false);
                     try {
-                      const response = await fetch('http://localhost:3001/api/notes', {
+                      const response = await fetch('http://localhost:3002/api/notes', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -838,7 +838,7 @@ const DemoNotebook = () => {
                   setTitle('学习指南');
                   setContent('加载中...');
                   try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                    const response = await fetch('http://localhost:3002/api/chat/simple', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -877,7 +877,7 @@ const DemoNotebook = () => {
                   setTitle('文件内容总结');
                   setContent('加载中...');
                   try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                    const response = await fetch('http://localhost:3002/api/chat/simple', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -916,7 +916,7 @@ const DemoNotebook = () => {
                   setTitle('常问问题');
                   setContent('加载中...');
                   try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                    const response = await fetch('http://localhost:3002/api/chat/simple', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -955,7 +955,7 @@ const DemoNotebook = () => {
                   setTitle('时间线');
                   setContent('加载中...');
                   try {
-                    const response = await fetch('http://localhost:3001/api/chat/simple', {
+                    const response = await fetch('http://localhost:3002/api/chat/simple', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -1019,7 +1019,7 @@ const DemoNotebook = () => {
                   }}>
                     <Button type="outline" onClick={async () => {
                       try {
-                        const response = await fetch('http://localhost:3001/api/sources/convert', {
+                        const response = await fetch('http://localhost:3002/api/sources/convert', {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
@@ -1080,7 +1080,7 @@ const DemoNotebook = () => {
                               ),
                               onOk: async () => {
                                 try {
-                                  const response = await fetch(`http://localhost:3001/api/notes/${note.id}`, {
+                                  const response = await fetch(`http://localhost:3002/api/notes/${note.id}`, {
                                     method: 'PUT',
                                     headers: {
                                       'Content-Type': 'application/json',
@@ -1106,7 +1106,7 @@ const DemoNotebook = () => {
                           }}>编辑标题</Menu.Item>
                           <Menu.Item key="delete" onClick={async () => {
                             try {
-                              const response = await fetch(`http://localhost:3001/api/notes/${note.id}`, {
+                              const response = await fetch(`http://localhost:3002/api/notes/${note.id}`, {
                                 method: 'DELETE',
                                 headers: {
                                   'Content-Type': 'application/json',

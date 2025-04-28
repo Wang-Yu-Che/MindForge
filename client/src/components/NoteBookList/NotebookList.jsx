@@ -50,7 +50,7 @@ const NoteBookList = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/notebooks', {
+      const response = await fetch('http://localhost:3002/api/notebooks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ const NoteBookList = () => {
   const fetchNotebooks = React.useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/notebooks', {
+      const response = await fetch('http://localhost:3002/api/notebooks', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -156,7 +156,7 @@ const NoteBookList = () => {
                     onOk: async () => {
                       try {
                         const token = localStorage.getItem('token');
-                        const response = await fetch(`http://localhost:3001/api/notebooks/${record.key}`, {
+                        const response = await fetch(`http://localhost:3002/api/notebooks/${record.key}`, {
                           method: 'DELETE',
                           headers: {
                             'Authorization': `Bearer ${token}`
@@ -212,7 +212,7 @@ const NoteBookList = () => {
                         onOk: async () => {
                           try {
                             const token = localStorage.getItem('token');
-                            const response = await fetch(`http://localhost:3001/api/notebooks/${item.key}`, {
+                            const response = await fetch(`http://localhost:3002/api/notebooks/${item.key}`, {
                               method: 'DELETE',
                               headers: {
                                 'Authorization': `Bearer ${token}`
@@ -343,7 +343,7 @@ const NoteBookList = () => {
           }
           try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/api/notebooks/${editingNotebook.key}`, {
+            const response = await fetch(`http://localhost:3002/api/notebooks/${editingNotebook.key}`, {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
@@ -370,7 +370,7 @@ const NoteBookList = () => {
             const fetchNotebooks = async () => {
               try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://localhost:3001/api/notebooks', {
+                const response = await fetch('http://localhost:3002/api/notebooks', {
                   headers: {
                     'Authorization': `Bearer ${token}`
                   }

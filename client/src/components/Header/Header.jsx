@@ -65,7 +65,7 @@ const Header = () => {
         formData.append('userId', localStorage.getItem('userId'));
         
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3001/api/user/avatar', {
+        const response = await fetch('http://localhost:3002/api/user/avatar', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`

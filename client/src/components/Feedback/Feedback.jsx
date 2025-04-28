@@ -29,7 +29,7 @@ const Feedback = ({ isOpen, onClose }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/feedback', {
+      const response = await fetch('http://localhost:3002/api/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

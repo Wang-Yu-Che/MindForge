@@ -399,7 +399,7 @@ app.post('/api/notes', async (req, res) => {
     const { title, content, folderName } = req.body;
     const noteId = await createNote(userId, title, content, folderName);
     // 调用简化版聊天路由
-    await fetch('http://localhost:3001/api/chat/simple', {
+    await fetch('http://localhost:3002/api/chat/simple', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -502,7 +502,7 @@ app.post('/api/user/avatar', async (req, res) => {
 });
 
 // 启动服务器
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`服务器运行在端口 ${PORT}`);
 });

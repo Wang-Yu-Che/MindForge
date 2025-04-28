@@ -65,7 +65,7 @@ const Login = () => {
           headers['Authorization'] = 'Bearer ' + token;
         }
         
-        const response = await fetch('http://localhost:3001/api/auth', {
+        const response = await fetch('http://localhost:3002/api/auth', {
           method: 'POST',
           headers: headers,
           body: JSON.stringify({
@@ -91,7 +91,7 @@ const Login = () => {
         
         // 查询用户笔记本数量
         try {
-          const notebooksResponse = await fetch(`http://localhost:3001/api/notebooks?userId=${data.userId}`, {
+          const notebooksResponse = await fetch(`http://localhost:3002/api/notebooks?userId=${data.userId}`, {
             headers: {
               'Authorization': `Bearer ${data.token}`
             }
