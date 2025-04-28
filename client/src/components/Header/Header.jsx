@@ -39,6 +39,7 @@ const Header = () => {
   };
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('/default-avatar.svg');
   const avatarRef = useRef(null);
 
   const { theme, toggleTheme } = useTheme();
@@ -50,6 +51,35 @@ const Header = () => {
   const handleAvatarClick = () => {
     setIsAvatarMenuOpen(!isAvatarMenuOpen);
   };
+
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+        
+        if (!token || !userId) return;
+        
+        const response = await fetch('http://localhost:3002/api/user/avatar', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('获取头像失败');
+        }
+        
+        const data = await response.json();
+        setAvatarUrl(data.avatarUrl || '/default-avatar.svg');
+      } catch (error) {
+        console.error('获取用户头像错误:', error);
+      }
+    };
+    
+    fetchUserAvatar();
+  }, []);
 
   const handleChangeAvatar = async () => {
     try {
@@ -164,7 +194,7 @@ const Header = () => {
                 </div>
                 <div ref={avatarRef} style={{ position: 'relative' }}>
                   <div className="user-avatar" onClick={handleAvatarClick}>
-                    <img src="/default-avatar.svg" alt="用户头像" />
+                    <img src={avatarUrl} alt="用户头像" />
                   </div>
                   <div className={`settings-menu ${isAvatarMenuOpen ? 'active' : ''}`}>
                     <div className="settings-menu-item" onClick={handleChangeAvatar}>

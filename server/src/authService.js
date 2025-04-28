@@ -136,4 +136,22 @@ const testRedisConnection = async () => {
   }
 };
 
-export { registerUser, loginUser, updateUserAvatar };
+// 获取用户头像URL
+const getUserAvatar = async (userId) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute('SELECT avatar_url FROM users WHERE id = ?', [userId]);
+    
+    if (rows.length === 0) {
+      throw new Error('用户不存在');
+    }
+    
+    await connection.end();
+    return rows[0].avatar_url;
+  } catch (err) {
+    console.error('获取用户头像失败:', err);
+    throw err;
+  }
+};
+
+export { registerUser, loginUser, updateUserAvatar, getUserAvatar };

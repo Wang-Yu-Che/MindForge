@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
-import { registerUser, loginUser, updateUserAvatar } from './authService.js';
+import { registerUser, loginUser, updateUserAvatar, getUserAvatar } from './authService.js';
 import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
@@ -82,7 +82,7 @@ app.post('/api/chat', async (req, res) => {
 // 简化版聊天路由
 app.post('/api/chat/simple', async (req, res) => {
   try {
-    const { message, slug, mode = 'chat', title, content } = req.body;
+    const { folderName,message, slug, mode = 'chat', title, content } = req.body;
     if (!slug) {
       throw new Error('工作区slug是必需的');
     }
@@ -90,6 +90,12 @@ app.post('/api/chat/simple', async (req, res) => {
     let processedMessage = message;
     if (title && content) {
       processedMessage = `我要对该知识库进行注释 注释标题为${title} 注释内容为${content}`;
+    }
+
+     // 根据按钮类型创建笔记
+     if (title && message) {
+      const noteid = await createNote(req.user.userId, title, '生成中...', folderName);
+      req.noteid = noteid;
     }
 
     const response = await fetch(`http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/chat`, {
@@ -113,7 +119,7 @@ app.post('/api/chat/simple', async (req, res) => {
       
     // 根据按钮类型创建笔记
     if (title && message) {
-      await createNote(req.user.userId, title, data.textResponse, req.body.slug);
+      await updateNote(req.noteid, title, data.textResponse);
     }
   
     res.json({
@@ -281,41 +287,32 @@ app.get('/api/sources', async (req, res) => {
     // 更新AnythingLLM的嵌入
     if (slug) {
       try {
-        const requestUrl = `http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/update-embeddings`;
-        const requestBody = {
-          adds: sources.map(source => source.location)
-        };
-        
-        /*console.log('AnythingLLM更新嵌入请求详情:', {
-          url: requestUrl,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${anythingllmConfig.apiKey}`
-          },
-          body: requestBody
-        });*/
-        
-        const response = await fetch(requestUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${anythingllmConfig.apiKey}`
-          },
-          body: JSON.stringify(requestBody)
+        // 只更新有文件后缀的source
+        const sourcesWithExtension = sources.filter(source => {
+          const fileName = source.file_name || '';
+          return fileName.includes('.');
         });
         
-        const responseData = await response.json();
-        
-        /*console.log('AnythingLLM更新嵌入响应详情:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          body: responseData
-        });*/
-      
-        if (!response.ok) {
-          console.error('更新AnythingLLM嵌入失败:', await response.text());
+        if (sourcesWithExtension.length > 0) {
+          const requestUrl = `http://localhost:${anythingllmConfig.port}/api/v1/workspace/${slug}/update-embeddings`;
+          const requestBody = {
+            adds: sourcesWithExtension.map(source => source.location)
+          };
+          
+          const response = await fetch(requestUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${anythingllmConfig.apiKey}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          const responseData = await response.json();
+          
+          if (!response.ok) {
+            console.error('更新AnythingLLM嵌入失败:', await response.text());
+          }
         }
       } catch (error) {
         console.error('更新AnythingLLM嵌入时出错:', error);
@@ -465,6 +462,24 @@ app.delete('/api/notes/:id', async (req, res) => {
   }
 });
 
+// 获取用户头像URL路由
+app.get('/api/user/avatar', async (req, res) => {
+  try {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ error: '用户认证信息无效' });
+    }
+    
+    const avatarUrl = await getUserAvatar(req.user.userId);
+    res.json({ avatarUrl });
+  } catch (error) {
+    console.error('获取头像失败:', error);
+    res.status(500).json({ 
+      error: '获取头像失败',
+      message: error.message
+    });
+  }
+});
+
 // 头像上传路由
 app.post('/api/user/avatar', async (req, res) => {
   try {
@@ -500,6 +515,8 @@ app.post('/api/user/avatar', async (req, res) => {
     });
   }
 });
+
+//
 
 // 启动服务器
 const PORT = process.env.PORT || 3002;

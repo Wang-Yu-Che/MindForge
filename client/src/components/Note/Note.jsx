@@ -782,6 +782,7 @@ const DemoNotebook = () => {
                       return;
                     }
                     setShowEditor(false);
+                    
                     try {
                       const response = await fetch('http://localhost:3002/api/notes', {
                         method: 'POST',
@@ -797,7 +798,7 @@ const DemoNotebook = () => {
                       });
                       if (response.ok) {
                         Message.success('笔记保存成功');
-                        await fetchNotes();
+                        await fetchNotes(); // 确保与服务器数据同步
                       } else {
                         throw new Error('保存失败');
                       }
@@ -845,6 +846,7 @@ const DemoNotebook = () => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                       },
                       body: JSON.stringify({
+                        folderName: state?.libraryName || 'default',
                         message: '请给我对所有资源文档包括注释内容的学习指南',
                         slug: state?.slug || 'default',
                         mode: 'chat',
@@ -884,6 +886,7 @@ const DemoNotebook = () => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                       },
                       body: JSON.stringify({
+                        folderName: state?.libraryName || 'default',
                         message: '请将每个文件文档的内容总结更改下',
                         slug: state?.slug || 'default',
                         mode: 'chat',
@@ -923,6 +926,7 @@ const DemoNotebook = () => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                       },
                       body: JSON.stringify({
+                        folderName: state?.libraryName || 'default',
                         message: '请针对每个文件文档给我生成他们对内容可能会问的问题',
                         slug: state?.slug || 'default',
                         mode: 'chat',
@@ -962,6 +966,7 @@ const DemoNotebook = () => {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                       },
                       body: JSON.stringify({
+                        folderName: state?.libraryName || 'default',
                         message: '对从聊天开始的所有对话以及文档上传，注释添加总结成时间线 详细展示给我',
                         slug: state?.slug || 'default',
                         mode: 'chat',

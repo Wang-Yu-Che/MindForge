@@ -1,4 +1,4 @@
-const storage = multer.diskStorage({
+/*const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, '/usr/share/nginx/html/'); // 这里是目标文件夹
     },
@@ -34,4 +34,4 @@ const storage = multer.diskStorage({
   app.listen(3000, () => {
     console.log('服务已启动，端口 3000');
   });
-  
+  */
