@@ -429,6 +429,122 @@ const DemoNotebook = () => {
                 size="mini"
                 onClick={async () => {
                   try {
+                    // 创建HTML模板
+                    const htmlTemplate = `
+                      <!DOCTYPE html>
+                      <html lang="zh-CN">
+                      <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>MindForge 笔记本分享</title>
+                        <style>
+                          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+                          .container { max-width: 1200px; margin: 0 auto; }
+                          .header { margin-bottom: 30px; }
+                          .sources { margin-bottom: 30px; }
+                          .notes { margin-bottom: 30px; }
+                          .messages { margin-bottom: 30px; }
+                          .message { padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+                          .user { background-color: #f0f2f5; }
+                          .assistant { background-color: #e6f7ff; }
+                          .message-header { display: flex; align-items: center; margin-bottom: 10px; }
+                          .avatar { width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; background-color: #1890ff; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+                          .timestamp { color: #8c8c8c; font-size: 12px; margin-left: 10px; }
+                          .source-item { padding: 8px; margin-bottom: 8px; background-color: #fafafa; border-radius: 4px; }
+                          .note-item { padding: 15px; margin-bottom: 15px; background-color: #f9f0ff; border-radius: 8px; }
+                          .note-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+                          .note-content { color: #333; }
+                        </style>
+                      </head>
+                      <body>
+                        <div class="container">
+                          <div class="header">
+                            <h1>MindForge 笔记本分享</h1>
+                            <p>创建时间：${new Date().toLocaleString('zh-CN')}</p>
+                          </div>
+                          
+                          <div class="sources">
+                            <h2>来源文件</h2>
+                            ${sources.map(source => `
+                              <div class="source-item">
+                                ${source.icon} ${source.label}
+                              </div>
+                            `).join('')}
+                          </div>
+
+                          <div class="notes">
+                            <h2>笔记列表</h2>
+                            ${notes.map(note => `
+                              <div class="note-item">
+                                <div class="note-title">${note.icon} ${note.title}</div>
+                                <div class="note-content">${note.content}</div>
+                              </div>
+                            `).join('')}
+                          </div>
+                          
+                          <div class="messages">
+                            <h2>对话记录</h2>
+                            ${messages.map(msg => `
+                              <div class="message ${msg.role}">
+                                <div class="message-header">
+                                  <div class="avatar">${msg.role === 'user' ? '你' : 'AI'}</div>
+                                  <span class="timestamp">${msg.timestamp}</span>
+                                </div>
+                                <div class="message-content">${msg.content}</div>
+                              </div>
+                            `).join('')}
+                          </div>
+                        </div>
+                      </body>
+                      </html>
+                    `;
+                    
+                    // 创建FormData对象并添加HTML文件
+                    const blob = new Blob([htmlTemplate], { type: 'text/html;charset=utf-8' });
+                    const formData = new FormData();
+                    formData.append('file', blob, `mindforge-notebook-${new Date().toISOString().split('T')[0]}.html`);
+                    
+                    // 发送POST请求上传文件
+                    const response = await fetch('http://121.43.148.194:3000/upload', {
+                      method: 'POST',
+                      body: formData
+                    });
+
+                    const result = await response.json();
+                    const shareUrl = `121.43.148.194/${result.filename}`;
+                    
+                    Modal.info({
+                      title: '分享成功',
+                      content: (
+                        <div>
+                          <p>您的笔记本已成功分享，点击下方链接复制：</p>
+                          <Input.TextArea
+                            value={shareUrl}
+                            autoSize
+                            readOnly
+                            onClick={(e) => {
+                              e.target.select();
+                              navigator.clipboard.writeText(shareUrl);
+                              Message.success('链接已复制到剪贴板');
+                            }}
+                          />
+                        </div>
+                      ),
+                      okText: '关闭'
+                    });
+                    Message.success('分享成功');
+                  } catch (error) {
+                    console.error('分享失败:', error);
+                    Message.error('分享失败');
+                  }
+                }}
+              >
+                分享
+              </Button>
+              <Button
+                size="mini"
+                onClick={async () => {
+                  try {
                     const exportData = {
                       version: '1.0',
                       timestamp: new Date().toISOString(),
