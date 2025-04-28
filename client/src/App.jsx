@@ -14,6 +14,7 @@ import DemoNotebook from './components/DemoNote/DemoNote';
 import NoteBookList from './components/NoteBookList/NotebookList';
 import PrivateRoute from './components/PrivateRoute/PrivateRoute';
 import { ThemeProvider } from './contexts/ThemeContext';
+import NotFound from './components/NotFound/NotFound';
 import './App.css';
 import './styles/theme.css';
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="/notebook" element={<PrivateRoute><Notebook /></PrivateRoute>} />
           <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
           <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         </div>
       </Router>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineCloudUpload, AiOutlineTeam, AiOutlineSafety } from 'react-icons/ai';
 import { Layout, Grid, Typography, Button, Space, Modal, Input, Message } from '@arco-design/web-react';
@@ -9,6 +9,32 @@ const Welcome = () => {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
   const [libraryName, setLibraryName] = useState('');
+
+  useEffect(() => {
+    const checkNotebooks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('http://localhost:3002/api/notebooks', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const notebooks = await response.json();
+          if (notebooks.length > 0) {
+            navigate('/note-book-list');
+          }
+        }
+      } catch (error) {
+        console.error('检查笔记本数量错误:', error);
+      }
+    };
+    
+    checkNotebooks();
+  }, [navigate]);
 
   const handleDemoClick = () => {
     navigate('/demo-notebook');
