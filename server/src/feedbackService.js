@@ -48,4 +48,37 @@ const saveFeedback = async (feedbackData) => {
  }
 };
 
-export { uploadToOSS, saveFeedback };
+//
+
+const getAllFeedbacks = async () => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const query = 'SELECT * FROM feedback ORDER BY created_at DESC';
+    const [rows] = await connection.execute(query);
+    await connection.end();
+    return rows;
+  } catch (error) {
+    console.error('获取所有反馈失败:', error);
+    throw error;
+  }
+};
+
+const getFeedbackById = async (feedbackId) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const query = 'SELECT * FROM feedback WHERE id = ?';
+    const [rows] = await connection.execute(query, [feedbackId]);
+    await connection.end();
+    
+    if (rows.length === 0) {
+      throw new Error('反馈不存在');
+    }
+    
+    return rows[0];
+  } catch (error) {
+    console.error('获取反馈失败:', error);
+    throw error;
+  }
+};
+
+export { uploadToOSS, saveFeedback, getAllFeedbacks, getFeedbackById };

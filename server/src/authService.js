@@ -154,4 +154,41 @@ const getUserAvatar = async (userId) => {
   }
 };
 
-export { registerUser, loginUser, updateUserAvatar, getUserAvatar };
+// 修改用户密码
+const changePassword = async (userId, oldPassword, newPassword) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute('SELECT password_hash FROM users WHERE id = ?', [userId]);
+    
+    if (rows.length === 0) {
+      throw new Error('用户不存在');
+    }
+    
+    const user = rows[0];
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+    
+    if (!isMatch) {
+      throw new Error('旧密码错误');
+    }
+    
+    const saltRounds = 10;
+    const newHashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    
+    const [result] = await connection.execute(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [newHashedPassword, userId]
+    );
+    
+    if (result.affectedRows === 0) {
+      throw new Error('更新密码失败');
+    }
+    
+    await connection.end();
+    return { success: true };
+  } catch (err) {
+    console.error('修改密码时发生错误:', err);
+    throw err;
+  }
+};
+
+export { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword };

@@ -123,6 +123,35 @@ const Header = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    try {
+      const oldPassword = prompt('请输入旧密码:');
+      const newPassword = prompt('请输入新密码:');
+      
+      if (!oldPassword || !newPassword) return;
+      
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3002/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ oldPassword, newPassword })
+      });
+      
+      if (!response.ok) {
+        throw new Error('修改密码失败');
+      }
+      
+      alert('密码修改成功');
+      handleLogout();
+    } catch (error) {
+      console.error('修改密码错误:', error);
+      alert(`修改密码失败: ${error.message}`);
+    }
+  };
+
   const handleLogout = () => {
     // 清除localStorage中的token和其他用户数据
     localStorage.clear();
@@ -201,6 +230,11 @@ const Header = () => {
                       <i className="fas fa-user-edit"></i>
                       更换头像
                     </div>
+                    <div className="settings-menu-item" onClick={handleChangePassword}>
+                      <i className="fas fa-key"></i>
+                      修改密码
+                    </div>
+
                     <div className="settings-menu-item" onClick={handleLogout}>
                       <i className="fas fa-sign-out-alt"></i>
                       退出登录

@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
-import { registerUser, loginUser, updateUserAvatar, getUserAvatar } from './authService.js';
+import { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword } from './authService.js';
 import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
@@ -173,6 +173,28 @@ app.get('/api/chat/:slug/history', async (req, res) => {
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// 获取所有反馈记录
+app.get('/api/admin/feedbacks', async (req, res) => {
+  try {
+    const feedbacks = await getAllFeedbacks();
+    res.json(feedbacks);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 获取指定ID的反馈记录
+app.get('/api/admin/feedbacks/:id', async (req, res) => {
+  try {
+    const feedback = await getFeedbackById(req.params.id);
+    res.json(feedback);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
 // 认证路由
 app.post('/api/auth', async (req, res) => {
   try {
@@ -188,6 +210,23 @@ app.post('/api/auth', async (req, res) => {
     } else {
       throw new Error('无效的操作类型');
     }
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// 修改密码路由
+app.post('/api/auth/change-password', async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new Error('用户未认证');
+    }
+    
+    await changePassword(userId, oldPassword, newPassword);
+    res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
