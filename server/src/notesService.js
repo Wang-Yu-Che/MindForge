@@ -84,4 +84,32 @@ const deleteNote = async (noteId) => {
   }
 };
 
-export { createNote, getNotes, updateNote, deleteNote };
+//
+
+// 分页查询所有笔记
+const getNotesByPage = async (page = 1, pageSize = 10) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const offset = (page - 1) * pageSize;
+    
+    const [rows] = await connection.execute(
+      'SELECT * FROM notes ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [pageSize, offset]
+    );
+    
+    const [countResult] = await connection.execute('SELECT COUNT(*) as total FROM notes');
+    await connection.end();
+    
+    return {
+      data: rows,
+      total: countResult[0].total,
+      page,
+      pageSize
+    };
+  } catch (error) {
+    console.error('分页查询笔记失败:', error);
+    throw error;
+  }
+};
+
+export { createNote, getNotes, updateNote, deleteNote, getNotesByPage };

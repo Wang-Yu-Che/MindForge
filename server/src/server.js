@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
-import { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword } from './authService.js';
+import { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword, getUsersByPage, deleteUser,getUserById, updateUserEmail} from './authService.js';
 import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
@@ -555,7 +555,65 @@ app.post('/api/user/avatar', async (req, res) => {
   }
 });
 
-//
+// 用户管理相关路由
+// 分页查询用户
+app.get('/api/users', authMiddleware, async (req, res) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.query;
+    const result = await getUsersByPage(parseInt(page), parseInt(pageSize));
+    res.json(result);
+  } catch (error) {
+    console.error('分页查询用户失败:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 删除用户
+app.delete('/api/users/:userId', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await deleteUser(parseInt(userId));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除用户失败:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 更新用户邮箱
+app.put('/api/user/email', async (req, res) => {
+  try {
+    const { userId, newEmail } = req.body;
+    
+    if (!userId || !newEmail) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    await updateUserEmail(userId, newEmail);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('更新用户邮箱失败:', error);
+    res.status(500).json({ 
+      error: '更新用户邮箱失败',
+      message: error.message 
+    });
+  }
+});
+
+// 更新用户信息
+
+
+// 查询单个用户
+app.get('/api/users/:email', authMiddleware, async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await getUserById(email);
+    res.json(user);
+  } catch (error) {
+    console.error('查询用户失败:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 启动服务器
 const PORT = process.env.PORT || 3002;

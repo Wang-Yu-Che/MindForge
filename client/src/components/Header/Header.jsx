@@ -247,7 +247,7 @@ const Header = () => {
                 <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''} end>概览</NavLink>
                 <NavLink to="/login" className={({ isActive }) => isActive ? 'active' : ''}>登录</NavLink>
               </>
-            )}
+            )}     
           </nav>
         </div>
       </div>

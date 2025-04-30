@@ -165,4 +165,32 @@ const deleteNotebook = async (notebookId) => {
   }
 };
 
-export { createNotebook, getUserNotebooks, updateNotebookTitle, deleteNotebook };
+//
+
+// 分页查询所有笔记本
+const getNotebooksByPage = async (page = 1, pageSize = 10) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const offset = (page - 1) * pageSize;
+    
+    const [rows] = await connection.execute(
+      'SELECT * FROM notebooks ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [pageSize, offset]
+    );
+    
+    const [countResult] = await connection.execute('SELECT COUNT(*) as total FROM notebooks');
+    await connection.end();
+    
+    return {
+      data: rows,
+      total: countResult[0].total,
+      page,
+      pageSize
+    };
+  } catch (error) {
+    console.error('分页查询笔记本失败:', error);
+    throw error;
+  }
+};
+
+export { createNotebook, getUserNotebooks, updateNotebookTitle, deleteNotebook, getNotebooksByPage };

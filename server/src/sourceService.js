@@ -105,4 +105,113 @@ const uploadSourceFile = async (base64File, fileName, userId, folderName) => {
   }
 };
 
-export { uploadSourceFile, getUserSources, saveSourceFile };
+
+//
+
+// 分页查询所有源文件
+const getSourcesByPage = async (page = 1, pageSize = 10) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const offset = (page - 1) * pageSize;
+    
+    const [rows] = await connection.execute(
+      'SELECT * FROM sources ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [pageSize, offset]
+    );
+    
+    const [countResult] = await connection.execute('SELECT COUNT(*) as total FROM sources');
+    await connection.end();
+    
+    return {
+      data: rows,
+      total: countResult[0].total,
+      page,
+      pageSize
+    };
+  } catch (error) {
+    console.error('分页查询源文件失败:', error);
+    throw error;
+  }
+};
+
+// 删除源文件
+const deleteSource = async (sourceId) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    
+    // 先获取源文件信息
+    const [source] = await connection.execute('SELECT * FROM sources WHERE id = ?', [sourceId]);
+    if (source.length === 0) {
+      throw new Error('源文件不存在');
+    }
+    
+    // 删除记录
+    const [result] = await connection.execute('DELETE FROM sources WHERE id = ?', [sourceId]);
+    await connection.end();
+    
+    if (result.affectedRows === 0) {
+      throw new Error('删除源文件失败');
+    }
+    
+    // 如果有关联的笔记本，更新source_count
+    if (source[0].folder_name) {
+      const updateConnection = await mysql.createConnection(dbConfig);
+      await updateConnection.execute(
+        'UPDATE notebooks SET source_count = source_count - 1 WHERE title = ?',
+        [source[0].folder_name]
+      );
+      await updateConnection.end();
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('删除源文件失败:', error);
+    throw error;
+  }
+};
+
+// 更新源文件信息
+const updateSource = async (sourceId, updateData) => {
+  try {
+    const { fileName, folderName } = updateData;
+    const connection = await mysql.createConnection(dbConfig);
+    
+    // 获取原始数据
+    const [source] = await connection.execute('SELECT * FROM sources WHERE id = ?', [sourceId]);
+    if (source.length === 0) {
+      throw new Error('源文件不存在');
+    }
+    
+    // 更新数据
+    const query = 'UPDATE sources SET file_name = ?, folder_name = ? WHERE id = ?';
+    const [result] = await connection.execute(query, [fileName, folderName, sourceId]);
+    await connection.end();
+    
+    if (result.affectedRows === 0) {
+      throw new Error('更新源文件失败');
+    }
+    
+    // 如果文件夹名变更，需要更新笔记本的source_count
+    if (source[0].folder_name !== folderName) {
+      const updateConnection = await mysql.createConnection(dbConfig);
+      // 原笔记本source_count减1
+      await updateConnection.execute(
+        'UPDATE notebooks SET source_count = source_count - 1 WHERE title = ?',
+        [source[0].folder_name]
+      );
+      // 新笔记本source_count加1
+      await updateConnection.execute(
+        'UPDATE notebooks SET source_count = source_count + 1 WHERE title = ?',
+        [folderName]
+      );
+      await updateConnection.end();
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('更新源文件失败:', error);
+    throw error;
+  }
+};
+
+export { uploadSourceFile, getUserSources, saveSourceFile, getSourcesByPage, deleteSource, updateSource };

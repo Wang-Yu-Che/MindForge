@@ -191,4 +191,141 @@ const changePassword = async (userId, oldPassword, newPassword) => {
   }
 };
 
-export { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword };
+
+// 更新用户邮箱
+const updateUserEmail = async (userId, newEmail) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      throw new Error('邮箱格式不正确');
+    }
+    
+    // 检查邮箱是否已被注册
+    const [existing] = await connection.execute('SELECT id FROM users WHERE email = ? AND id != ?', [newEmail, userId]);
+    if (existing.length > 0) {
+      throw new Error('邮箱已被其他用户注册');
+    }
+    
+    // 更新邮箱
+    const [result] = await connection.execute(
+      'UPDATE users SET email = ? WHERE id = ?',
+      [newEmail, userId]
+    );
+    
+    if (result.affectedRows === 0) {
+      throw new Error('用户不存在或更新失败');
+    }
+    
+    await connection.end();
+    return { success: true };
+  } catch (err) {
+    console.error('更新邮箱时发生错误:', err);
+    throw err;
+  }
+};
+
+// 分页查询用户
+const getUsersByPage = async (page = 1, pageSize = 10) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const offset = (page - 1) * pageSize;
+    
+    // 明确转换为数字并校验
+let numericPageSize = Number(pageSize);
+let numericOffset = Number(offset);
+
+// 如果转换失败（是 NaN），则使用默认值
+if (isNaN(numericPageSize)) {
+  numericPageSize = 10;
+}
+if (isNaN(numericOffset)) {
+  numericOffset = 0;
+}
+    
+    const [rows] = await connection.query(
+      'SELECT id, email, avatar_url, created_at as createdAt FROM users ORDER BY id DESC LIMIT ? OFFSET ?',
+      [numericPageSize, numericOffset]
+    );
+    
+    const [countResult] = await connection.execute('SELECT COUNT(*) as total FROM users');
+    await connection.end();
+    
+    return {
+      data: rows,
+      total: countResult[0].total,
+      page,
+      pageSize
+    };
+  } catch (err) {
+    console.error('分页查询用户失败:', err);
+    throw err;
+  }
+};
+
+// 删除用户
+const deleteUser = async (userId) => {
+  let connection;
+  try {
+    connection = await mysql.createConnection(dbConfig);
+    await connection.beginTransaction();
+    
+    // 先删除用户的所有笔记
+    await connection.execute('DELETE FROM notes WHERE user_id = ?', [userId]);
+    
+    // 删除用户的所有源文件
+    await connection.execute('DELETE FROM sources WHERE user_id = ?', [userId]);
+    
+    // 删除用户的所有笔记本
+    await connection.execute('DELETE FROM notebooks WHERE user_id = ?', [userId]);
+    
+    // 最后删除用户
+    const [result] = await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
+    
+    if (result.affectedRows === 0) {
+      throw new Error('用户不存在');
+    }
+    
+    await connection.commit();
+    await connection.end();
+    
+    // 删除Redis中的token
+    await redisClient.del(`token:${userId}`);
+    
+    return { success: true };
+  } catch (err) {
+    if (connection) {
+      await connection.rollback();
+      await connection.end();
+    }
+    console.error('删除用户失败:', err);
+    throw err;
+  }
+};
+
+// 查询单个用户
+const getUserById = async (email) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute(
+      'SELECT id, email, avatar_url FROM users WHERE email = ?',
+      [email]
+    );
+    
+    if (rows.length === 0) {
+      throw new Error('用户不存在');
+    }
+    
+    await connection.end();
+    return rows[0];
+  } catch (err) {
+    console.error('查询用户失败:', err);
+    throw err;
+  }
+};
+
+//
+
+export { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword, getUsersByPage, deleteUser, getUserById,updateUserEmail };
