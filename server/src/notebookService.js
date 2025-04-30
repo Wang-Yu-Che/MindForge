@@ -173,7 +173,7 @@ const getNotebooksByPage = async (page = 1, pageSize = 10) => {
     const connection = await mysql.createConnection(dbConfig);
     const offset = (page - 1) * pageSize;
     
-    const [rows] = await connection.execute(
+    const [rows] = await connection.query(
       'SELECT * FROM notebooks ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [pageSize, offset]
     );

@@ -6,8 +6,8 @@ import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback, getAllFeedbacks,deleteFeedback,getFeedbackById } from './feedbackService.js';
-import { uploadSourceFile, getUserSources,saveSourceFile } from './sourceService.js';
-import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook } from './notebookService.js';
+import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage } from './sourceService.js';
+import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook, getNotebooksByPage } from './notebookService.js';
 import { createNote, getNotes, updateNote, deleteNote } from './notesService.js';
 import fileUpload from 'express-fileupload';
 
@@ -172,6 +172,35 @@ app.get('/api/chat/:slug/history', async (req, res) => {
 // 增加请求体大小限制
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 分页查询所有源文件
+app.get('/api/admin/sources', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+     const sources = await getSourcesByPage(page, pageSize);
+    res.json(sources);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 获取指定用户的源文件列表
+app.get('/api/admin/user-sources', authMiddleware, async (req, res) => {
+  try {
+    const userId = Number(req.query.userId);
+    const folderName = req.query.folderName || null;
+    
+    if (!userId) {
+      throw new Error('userId参数是必需的');
+    }
+    
+    const sources = await getUserSources(userId, folderName);
+    res.json(sources);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 获取所有反馈记录
 app.get('/api/admin/feedbacks', async (req, res) => {
@@ -402,9 +431,34 @@ app.get('/api/notebooks', async (req, res) => {
   }
 });
 
+app.get('/api/admin/notebooks-id/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const notebooks = await getNotebooks(userId);
+    res.json(notebooks);
+  } catch (error) {
+    console.error('获取笔记本列表失败:', error);
+    res.status(500).json({ error: '获取笔记本列表失败' });
+  }
+});
+
+// 分页查询笔记本
+app.get('/api/admin/notebooks', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const notebooks = await getNotebooksByPage(page, pageSize);
+    res.json(notebooks);
+  } catch (error) {
+    console.error('分页查询笔记本失败:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
 app.put('/api/notebooks/:id', async (req, res) => {
   try {
-    const userId = req.user.userId;
     const notebookId = req.params.id;
     const { title } = req.body;
     const result = await updateNotebook(notebookId, title);
