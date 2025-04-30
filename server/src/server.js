@@ -11,6 +11,7 @@ import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle a
 import { createNote, getNotes, updateNote, deleteNote,getNotesByPage } from './notesService.js';
 import fileUpload from 'express-fileupload';
 import { getAllStats } from './getAllStats.js';
+import { handlePunch,getPunchRecords} from './PunchLogsService.js';
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,29 @@ app.put('/api/admin/reset-password', async (req, res) => {
 // 应用认证中间件到所有API路由
 // 应用认证中间件到所有路由，除了白名单路径
 app.use(authMiddleware);
+
+// 打卡路由
+app.post('/api/punch/:id', async (req, res) => {
+  try {
+    const result = await handlePunch(req.params.id);
+    res.json(result || { success: true });
+  } catch (error) {
+    res.json({ success: true });
+  }
+});
+
+// 获取打卡记录路由
+app.get('/api/punch-records/:id', async (req, res) => {
+  try {
+    const result = await getPunchRecords(req.params.id);
+    //
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//
 
 // 存储对话历史
 const conversations = new Map();

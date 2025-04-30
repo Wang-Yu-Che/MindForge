@@ -8,7 +8,7 @@ const FeedbackManagement = () => {
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -17,7 +17,7 @@ const FeedbackManagement = () => {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, [pagination.current, pagination.pageSize]);
+  }, [pagination.current, pagination.pageSize, fetchFeedbacks]);
 
   const fetchFeedbacks = async () => {
     setLoading(true);

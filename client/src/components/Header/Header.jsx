@@ -3,6 +3,8 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import './Header.css';
 import Feedback from '../Feedback/Feedback';
 import { useTheme } from '../../contexts/ThemeContext';
+import PunchCalendar from '../PunchCalendar/PunchCalendar';
+import { Modal } from '@arco-design/web-react';
 
 const Header = () => {
   const location = useLocation();
@@ -40,6 +42,7 @@ const Header = () => {
 
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('/default-avatar.svg');
+  const [isPunchModalVisible, setIsPunchModalVisible] = useState(false);
   const avatarRef = useRef(null);
 
   const { theme, toggleTheme } = useTheme();
@@ -189,6 +192,16 @@ const Header = () => {
           <nav className="nav-links">
             {isWelcomePage ? (
               <>
+              <div>
+                <button 
+                  className="settings-button" 
+                  onClick={() => setIsPunchModalVisible(true)}
+                  style={{ marginRight: '10px' }}
+                >
+                  <i className="fas fa-calendar-check"></i>
+                  每日打卡
+                </button>
+                </div>
                 <div ref={settingsRef} style={{ position: 'relative' }}>
                   <button className="settings-button" onClick={handleSettingsClick}>
                     <i className="fas fa-cog"></i>
@@ -257,6 +270,17 @@ const Header = () => {
           onClose={() => setIsFeedbackOpen(false)}
         />
       )}
+      <Modal
+        title="打卡日历"
+        visible={isPunchModalVisible}
+        onCancel={() => setIsPunchModalVisible(false)}
+        footer={null}
+        style={{ width: 'auto', height: '780px' }}
+      >
+      <div style={{ transform: 'scale(0.65)',transformOrigin: 'top' }}>
+        <PunchCalendar />
+      </div>
+      </Modal>
     </header>
   );
 };
