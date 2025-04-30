@@ -1,59 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Space, Message, Tag } from '@arco-design/web-react';
 import { IconSearch, IconDelete, IconEdit, IconDownload } from '@arco-design/web-react/icon';
 
 const ResourceManagement = () => {
-  const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [resources, setResources] = useState([
-    {
-      id: 1,
-      name: '示例资源1.pdf',
-      type: 'PDF',
-      size: '2.5MB',
-      uploadedBy: '测试用户1',
-      uploadedAt: '2023-01-01',
-    },
-    {
-      id: 2,
-      name: '示例资源2.docx',
-      type: 'Word',
-      size: '1.8MB',
-      uploadedBy: '测试用户2',
-      uploadedAt: '2023-01-02',
-    },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [resources, setResources] = useState([]);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  const fetchResources = async (page = 1, pageSize = 10) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:3002/api/admin/sources?page=${page}&pageSize=${pageSize}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('获取资源列表失败');
+      const data = await response.json();
+      setResources(data.data);
+      setPagination({
+        current: data.page,
+        pageSize: data.pageSize,
+        total: data.total
+      });
+    } catch (error) {
+      Message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchResources();
+  }, []);
 
   const columns = [
     {
       title: '资源名称',
-      dataIndex: 'name',
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      dataIndex: 'file_name',
+      sorter: (a, b) => a.file_name.localeCompare(b.file_name),
     },
     {
       title: '类型',
       dataIndex: 'type',
-      render: (type) => (
-        <Tag color="blue">{type}</Tag>
-      ),
-      filters: [
-        { text: 'PDF', value: 'PDF' },
-        { text: 'Word', value: 'Word' },
-      ],
+      render: (_, record) => {
+        const fileName = record.file_name;
+        const fileExt = fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : '注释类型';
+        return <Tag color="blue">{fileExt}</Tag>;
+      },
+      filters: resources.reduce((acc, resource) => {
+        const fileName = resource.file_name;
+        const fileExt = fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : '注释类型';
+        if (!acc.some(item => item.value === fileExt)) {
+          acc.push({ text: fileExt, value: fileExt });
+        }
+        return acc;
+      }, []),
       onFilter: (value, record) => record.type === value,
     },
     {
-      title: '大小',
-      dataIndex: 'size',
+      title: '上传者',
+      dataIndex: 'user_id',
+      sorter: (a, b) => a.user_id.localeCompare(b.user_id),
     },
     {
-      title: '上传者',
-      dataIndex: 'uploadedBy',
+      title: '知识库名',
+      dataIndex: 'folder_name',
+      sorter: (a, b) => a.folder_name.localeCompare(b.folder_name),
     },
     {
       title: '上传时间',
-      dataIndex: 'uploadedAt',
-      sorter: (a, b) => new Date(a.uploadedAt) - new Date(b.uploadedAt),
+      dataIndex: 'created_at',
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
     },
     {
       title: '操作',
@@ -68,13 +92,6 @@ const ResourceManagement = () => {
           </Button>
           <Button
             type="text"
-            icon={<IconEdit />}
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="text"
             status="danger"
             icon={<IconDelete />}
             onClick={() => handleDelete(record)}
@@ -86,24 +103,60 @@ const ResourceManagement = () => {
     },
   ];
 
-  const handleSearch = () => {
-    const filteredResources = resources.filter(resource =>
-      resource.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      resource.uploadedBy.toLowerCase().includes(searchText.toLowerCase())
-    );
-    setResources(filteredResources);
+  const handleSearch = async () => {
+    if (!searchText) {
+      return fetchResources(pagination.current, pagination.pageSize);
+    }
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:3002/api/admin/sources-name/${searchText}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('搜索资源失败');
+      const data = await response.json();
+      setResources(data.data);
+      setPagination({
+        current: 1,
+        pageSize: 1,
+        total: data.data?.length || 0
+      });
+    } catch (error) {
+      Message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownload = (record) => {
-    Message.info(`下载资源: ${record.name}`);
+    if (record.file_url && (record.file_url.startsWith('http://') || record.file_url.startsWith('https://'))) {
+      window.open(record.file_url, '_blank');
+    } else {
+      Message.error(record.file_url ? '这不是有效的文件资源链接' : '资源链接无效');
+    }
   };
 
-  const handleEdit = (record) => {
-    Message.info(`编辑资源: ${record.name}`);
-  };
-
-  const handleDelete = (record) => {
-    Message.info(`删除资源: ${record.name}`);
+  const handleDelete = async (record) => {
+    try {
+      const response = await fetch(`http://localhost:3002/api/admin/sources/${record.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error('删除资源失败');
+      }
+  
+      Message.success('资源删除成功');
+      fetchResources(pagination.current, pagination.pageSize);
+    } catch (error) {
+      Message.error(error.message);
+    }
   };
 
   return (
@@ -112,7 +165,7 @@ const ResourceManagement = () => {
         <Space>
           <Input
             allowClear
-            placeholder="搜索资源名称或上传者"
+            placeholder="搜索资源名称"
             value={searchText}
             onChange={setSearchText}
             style={{ width: 300 }}
@@ -120,9 +173,7 @@ const ResourceManagement = () => {
           <Button type="primary" icon={<IconSearch />} onClick={handleSearch}>
             搜索
           </Button>
-          <Button type="primary">
-            上传资源
-          </Button>
+  
         </Space>
       </div>
 

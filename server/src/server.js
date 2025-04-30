@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback, getAllFeedbacks,deleteFeedback,getFeedbackById } from './feedbackService.js';
-import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage } from './sourceService.js';
+import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage,deleteSource, updateSource,searchSourcesByName } from './sourceService.js';
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook, getNotebooksByPage } from './notebookService.js';
 import { createNote, getNotes, updateNote, deleteNote,getNotesByPage } from './notesService.js';
 import fileUpload from 'express-fileupload';
@@ -179,6 +179,19 @@ app.get('/api/admin/sources', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
      const sources = await getSourcesByPage(page, pageSize);
+    res.json(sources);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 模糊查询源文件
+app.get('/api/admin/sources-name/:key', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const keyword = req.params.key;
+    const sources = await searchSourcesByName(keyword,page, pageSize);
     res.json(sources);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -692,6 +705,36 @@ app.put('/api/user/email', async (req, res) => {
 
 // 更新用户信息
 
+// 删除源文件路由
+app.delete('/api/admin/sources/:id', async (req, res) => {
+  try {
+    const sourceId = req.params.id;
+    await deleteSource(sourceId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除源文件失败:', error);
+    res.status(500).json({ 
+      error: '删除源文件失败',
+      message: error.message 
+    });
+  }
+});
+
+// 更新源文件路由
+app.put('/api/admin/sources/:id', async (req, res) => {
+  try {
+    const sourceId = req.params.id;
+    const { fileName, folderName } = req.body;
+    await updateSource(sourceId, { fileName, folderName });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('更新源文件失败:', error);
+    res.status(500).json({ 
+      error: '更新源文件失败',
+      message: error.message 
+    });
+  }
+});
 
 // 查询单个用户
 app.get('/api/users/:email', authMiddleware, async (req, res) => {

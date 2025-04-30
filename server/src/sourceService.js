@@ -114,7 +114,7 @@ const getSourcesByPage = async (page = 1, pageSize = 10) => {
     const connection = await mysql.createConnection(dbConfig);
     const offset = (page - 1) * pageSize;
     
-    const [rows] = await connection.execute(
+    const [rows] = await connection.query(
       'SELECT * FROM sources ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [pageSize, offset]
     );
@@ -214,4 +214,34 @@ const updateSource = async (sourceId, updateData) => {
   }
 };
 
-export { uploadSourceFile, getUserSources, saveSourceFile, getSourcesByPage, deleteSource, updateSource };
+// 根据文件名模糊查询源文件
+const searchSourcesByName = async (keyword, page = 1, pageSize = 10) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const offset = (page - 1) * pageSize;
+    
+    const [rows] = await connection.query(
+      'SELECT * FROM sources WHERE file_name LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [`%${keyword}%`, pageSize, offset]
+    );
+    
+    const [countResult] = await connection.execute(
+      'SELECT COUNT(*) as total FROM sources WHERE file_name LIKE ?',
+      [`%${keyword}%`]
+    );
+    
+    await connection.end();
+    
+    return {
+      data: rows,
+      total: countResult[0].total,
+      page,
+      pageSize
+    };
+  } catch (error) {
+    console.error('模糊查询源文件失败:', error);
+    throw error;
+  }
+};
+
+export { uploadSourceFile, getUserSources, saveSourceFile, getSourcesByPage, deleteSource, updateSource, searchSourcesByName };
