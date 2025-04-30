@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Table, Input, Button, Space, Message, Tag, Modal, Image } from '@arco-design/web-react';
 import { IconSearch, IconDelete, IconEye } from '@arco-design/web-react/icon';
 
@@ -14,16 +14,12 @@ const FeedbackManagement = () => {
     pageSize: 10,
     total: 0
   });
-
-  useEffect(() => {
-    fetchFeedbacks();
-  }, [pagination.current, pagination.pageSize, fetchFeedbacks]);
-
-  const fetchFeedbacks = async () => {
+// eslint-disable-next-line
+  const fetchFeedbacks = async (page = 1, pageSize = 10) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://localhost:3002/api/admin/feedbacks?page=${pagination.current}&pageSize=${pagination.pageSize}`, {
+      const response = await fetch(`http://localhost:3002/api/admin/feedbacks?page=${page}&pageSize=${pageSize}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -46,6 +42,11 @@ const FeedbackManagement = () => {
       setLoading(false);
     }
   };
+  
+  useEffect(() => {
+    fetchFeedbacks();
+    // eslint-disable-next-line
+  }, []);
 
   const columns = [
     {
