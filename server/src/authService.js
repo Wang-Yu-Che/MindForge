@@ -328,4 +328,34 @@ const getUserById = async (email) => {
 
 //
 
-export { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword, getUsersByPage, deleteUser, getUserById,updateUserEmail };
+// 管理员重置用户密码
+const updatePassword = async (userName, newPassword) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute('SELECT id FROM users WHERE email = ?', [userName]);
+    
+    if (rows.length === 0) {
+      throw new Error('用户不存在');
+    }
+    
+    const saltRounds = 10;
+    const newHashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    
+    const [result] = await connection.execute(
+      'UPDATE users SET password_hash = ? WHERE email = ?',
+      [newHashedPassword, userName]
+    );
+    
+    if (result.affectedRows === 0) {
+      throw new Error('更新密码失败');
+    }
+    
+    await connection.end();
+    return { success: true };
+  } catch (err) {
+    console.error('重置密码时发生错误:', err);
+    throw err;
+  }
+};
+
+export { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword, getUsersByPage, deleteUser, getUserById, updateUserEmail, updatePassword };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Button, Checkbox, Link, Message } from '@arco-design/web-react';
+import { Input, Button, Checkbox, Link, Message, Modal } from '@arco-design/web-react';
 import { IconUser, IconLock } from '@arco-design/web-react/icon';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
@@ -7,7 +7,7 @@ import './Login.css';
 const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = React.useState('admin');
-  const [password, setPassword] = React.useState('123456');
+  const [password, setPassword] = React.useState('');
 
   const handleLogin = () => {
     fetch('http://localhost:3002/api/auth', {
@@ -67,7 +67,47 @@ const Login = () => {
         />
         <div className="login-options">
           <Checkbox>记住密码</Checkbox>
-          <Link style={{ float: 'right' }}>忘记密码</Link>
+          <Link style={{ float: 'right' }} onClick={() => {
+            Modal.confirm({
+              title: '找回密码',
+              content: (
+                <div>
+                  <p>请输入密保问题答案:</p>
+                  <Input placeholder="密保问题答案" style={{ marginBottom: 16 }} />
+                  <p>请输入新密码:</p>
+                  <Input.Password placeholder="新密码" />
+                </div>
+              ),
+              onOk: async () => {
+                const answer = document.querySelector('.arco-modal-content input').value;
+                if (answer === 'ZZULIMindForge') {
+                  try {
+                    const response = await fetch('http://localhost:3002/api/admin/reset-password', {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({
+                        userName: username,
+                        newPassword: document.querySelectorAll('.arco-modal-content input')[1].value || '123456'
+                      })
+                    });
+                    if (response.ok) {
+                      Message.success('密码已重置');
+                    } else {
+                      Message.error('密码重置失败');
+                    }
+                  } catch (error) {
+                    console.error('密码重置错误:', error);
+                    Message.error('密码重置过程中发生错误');
+                  }
+                } else {
+                  Message.error('密保问题答案错误');
+                }
+              }
+            });
+          }}>忘记密码</Link>
         </div>
         <Button type="primary" long style={{ marginTop: 16 }} onClick={handleLogin}>
           登录

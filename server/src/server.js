@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
-import { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword, getUsersByPage, deleteUser,getUserById, updateUserEmail} from './authService.js';
+import { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePassword, getUsersByPage, deleteUser,getUserById, updateUserEmail,updatePassword} from './authService.js';
 import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
@@ -16,6 +16,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
+
+// 管理员重置用户密码
+app.put('/api/admin/reset-password', async (req, res) => {
+  try {
+    const { userName, newPassword } = req.body;
+    
+    if (!userName || !newPassword) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    await updatePassword(userName, newPassword);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('重置密码失败:', error);
+    res.status(500).json({ 
+      error: '重置密码失败',
+      message: error.message 
+    });
+  }
+});
 
 // 应用认证中间件到所有API路由
 // 应用认证中间件到所有路由，除了白名单路径
@@ -34,6 +54,8 @@ app.get('/api/admin/stats', async (req, res) => {
     res.status(500).json({ error: '获取统计数据失败' });
   }
 });
+
+//
 
 // 聊天路由
 app.post('/api/chat', async (req, res) => {
