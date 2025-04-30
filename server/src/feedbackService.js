@@ -48,37 +48,68 @@ const saveFeedback = async (feedbackData) => {
  }
 };
 
-//
 
-const getAllFeedbacks = async () => {
+const getAllFeedbacks = async (page = 1, pageSize = 10) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    const query = 'SELECT * FROM feedback ORDER BY created_at DESC';
-    const [rows] = await connection.execute(query);
+    const offset = (page - 1) * pageSize;
+    
+    const [rows] = await connection.query(
+      'SELECT * FROM feedback ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [pageSize, offset]
+    );
+    
+    const [countResult] = await connection.execute('SELECT COUNT(*) as total FROM feedback');
     await connection.end();
-    return rows;
+    
+    return {
+      data: rows,
+      total: countResult[0].total,
+      page,
+      pageSize
+    };
   } catch (error) {
     console.error('获取所有反馈失败:', error);
     throw error;
   }
 };
 
-const getFeedbackById = async (feedbackId) => {
+const getFeedbackById = async (user_id) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    const query = 'SELECT * FROM feedback WHERE id = ?';
-    const [rows] = await connection.execute(query, [feedbackId]);
+    const query = 'SELECT * FROM feedback WHERE user_id = ?';
+    const [rows] = await connection.execute(query, [user_id]);
     await connection.end();
     
     if (rows.length === 0) {
       throw new Error('反馈不存在');
     }
     
-    return rows[0];
+    return rows;
   } catch (error) {
     console.error('获取反馈失败:', error);
     throw error;
   }
 };
 
-export { uploadToOSS, saveFeedback, getAllFeedbacks, getFeedbackById };
+
+const deleteFeedback = async (feedbackId) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const query = 'DELETE FROM feedback WHERE id = ?';
+    
+    const [result] = await connection.execute(query, [feedbackId]);
+    await connection.end();
+    
+    if (result.affectedRows === 0) {
+      throw new Error('反馈不存在');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('删除反馈失败:', error);
+    throw error;
+  }
+};
+
+export { uploadToOSS, saveFeedback, getAllFeedbacks, getFeedbackById, deleteFeedback };

@@ -1,36 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Space, Message, Tag, Modal, Image } from '@arco-design/web-react';
-import { IconSearch, IconDelete, IconEdit, IconEye } from '@arco-design/web-react/icon';
+import { IconSearch, IconDelete, IconEye } from '@arco-design/web-react/icon';
 
 const FeedbackManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState(null);
-  const [feedbacks, setFeedbacks] = useState([
-    {
-      id: 1,
-      userId: 101,
-      content: '系统使用体验很好，但是希望能添加更多的功能。',
-      screenshotUrl: 'https://example.com/screenshot1.jpg',
-      emailUpdates: true,
-      createdAt: '2023-01-01 10:30:00'
-    },
-    {
-      id: 2,
-      userId: 102,
-      content: '遇到了一些操作上的问题，希望能得到解决。',
-      screenshotUrl: null,
-      emailUpdates: false,
-      createdAt: '2023-01-02 15:45:00'
-    },
-  ]);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  useEffect(() => {
+    fetchFeedbacks();
+  }, [pagination.current, pagination.pageSize]);
+
+  const fetchFeedbacks = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`http://localhost:3002/api/admin/feedbacks?page=${pagination.current}&pageSize=${pagination.pageSize}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch feedbacks');
+      }
+      
+      const data = await response.json();
+      setFeedbacks(data.data || []);
+      setPagination({
+        ...pagination,
+        total: data.data?.length || 0
+      });
+    } catch (error) {
+      setError(error.message);
+      Message.error('获取反馈数据失败: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     {
       title: '用户ID',
-      dataIndex: 'userId',
-      sorter: (a, b) => a.userId - b.userId,
+      dataIndex: 'user_id',
+      sorter: (a, b) => a.user_id - b.user_id,
     },
     {
       title: '反馈内容',
@@ -43,14 +64,14 @@ const FeedbackManagement = () => {
     },
     {
       title: '截图',
-      dataIndex: 'screenshotUrl',
+      dataIndex: 'screenshot_url',
       render: (url) => (
         url ? <Tag color="blue">有截图</Tag> : <Tag color="gray">无截图</Tag>
       ),
     },
     {
       title: '邮件更新',
-      dataIndex: 'emailUpdates',
+      dataIndex: 'email_updates',
       render: (emailUpdates) => (
         <Tag color={emailUpdates ? 'green' : 'gray'}>
           {emailUpdates ? '是' : '否'}
@@ -60,12 +81,12 @@ const FeedbackManagement = () => {
         { text: '是', value: true },
         { text: '否', value: false },
       ],
-      onFilter: (value, record) => record.emailUpdates === value,
+      onFilter: (value, record) => Boolean(record.email_updates) === Boolean(value),
     },
     {
       title: '创建时间',
-      dataIndex: 'createdAt',
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      dataIndex: 'created_at',
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
     },
     {
       title: '操作',
@@ -91,21 +112,66 @@ const FeedbackManagement = () => {
     },
   ];
 
-  const handleSearch = () => {
-    const filteredFeedbacks = feedbacks.filter(feedback =>
-      feedback.content.toLowerCase().includes(searchText.toLowerCase()) ||
-      feedback.userId.toString().includes(searchText)
-    );
-    setFeedbacks(filteredFeedbacks);
+  const handleSearch = async () => {
+    try {
+      if (!searchText.trim()) {
+        return fetchFeedbacks();
+      }
+      setLoading(true);
+      const response = await fetch(`http://localhost:3002/api/admin/feedbacks/${encodeURIComponent(searchText)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      setFeedbacks(data || []);
+      setPagination({
+        current: 1,
+        pageSize: 10,
+        total: data.data?.length || 0
+      });
+    } catch (error) {
+      Message.error('搜索反馈失败: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleView = (record) => {
-    setCurrentFeedback(record);
+    setCurrentFeedback({
+      ...record,
+      screenshotUrl: record.screenshot_url
+    });
     setViewModalVisible(true);
   };
 
-  const handleDelete = (record) => {
-    Message.info(`删除反馈: ${record.id}`);
+  const handleDelete = async (record) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除反馈ID为${record.id}的记录吗?`,
+      okText: '确认',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const response = await fetch(`http://localhost:3002/api/admin/feedbacks/${record.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (response.ok) {
+            Message.success('删除反馈成功');
+            fetchFeedbacks(); // 刷新列表
+          } else {
+            const errorData = await response.json();
+            Message.error(`删除失败: ${errorData.error}`);
+          }
+        } catch (error) {
+          Message.error(`删除反馈失败: ${error.message}`);
+        }
+      }
+    });
   };
 
   return (
@@ -114,7 +180,7 @@ const FeedbackManagement = () => {
         <Space>
           <Input
             allowClear
-            placeholder="搜索反馈内容或用户ID"
+            placeholder="搜索用户ID"
             value={searchText}
             onChange={setSearchText}
             style={{ width: 300 }}
@@ -132,7 +198,7 @@ const FeedbackManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: feedbacks.length,
+          total: feedbacks?.length || 0,
           pageSize: 10,
           showTotal: true,
         }}
@@ -147,17 +213,24 @@ const FeedbackManagement = () => {
       >
         {currentFeedback && (
           <div>
-            <p><strong>用户ID：</strong>{currentFeedback.userId}</p>
-            <p><strong>反馈内容：</strong>{currentFeedback.content}</p>
-            <p><strong>邮件更新：</strong>{currentFeedback.emailUpdates ? '是' : '否'}</p>
-            <p><strong>创建时间：</strong>{currentFeedback.createdAt}</p>
+            <p><strong>用户ID：</strong>{currentFeedback.user_id}</p>
+            <p><strong>反馈内容：</strong>
+              <div style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentFeedback.content}
+              </div>
+            </p>
+            <p><strong>邮件更新：</strong>
+              <Tag color={currentFeedback.email_updates ? 'green' : 'gray'}>
+                {currentFeedback.email_updates ? '是' : '否'}
+              </Tag>
+            </p>
+            <p><strong>创建时间：</strong>{currentFeedback.created_at}</p>
             {currentFeedback.screenshotUrl && (
-              <div>
+              <div style={{ maxWidth: '100%', height: 200,overflow: 'hidden' }}>
                 <p><strong>截图：</strong></p>
                 <Image
                   src={currentFeedback.screenshotUrl}
                   alt="反馈截图"
-                  style={{ maxWidth: '100%' }}
                 />
               </div>
             )}

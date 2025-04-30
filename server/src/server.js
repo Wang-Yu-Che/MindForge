@@ -5,7 +5,7 @@ import { registerUser, loginUser, updateUserAvatar, getUserAvatar, changePasswor
 import jwt from 'jsonwebtoken';
 import { jwtConfig, anythingllmConfig } from './config.js';
 import authMiddleware from './middleware/auth.js';
-import { uploadToOSS, saveFeedback } from './feedbackService.js';
+import { uploadToOSS, saveFeedback, getAllFeedbacks,deleteFeedback,getFeedbackById } from './feedbackService.js';
 import { uploadSourceFile, getUserSources,saveSourceFile } from './sourceService.js';
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook } from './notebookService.js';
 import { createNote, getNotes, updateNote, deleteNote } from './notesService.js';
@@ -176,7 +176,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 获取所有反馈记录
 app.get('/api/admin/feedbacks', async (req, res) => {
   try {
-    const feedbacks = await getAllFeedbacks();
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const feedbacks = await getAllFeedbacks(page, pageSize);
     res.json(feedbacks);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -188,6 +190,16 @@ app.get('/api/admin/feedbacks/:id', async (req, res) => {
   try {
     const feedback = await getFeedbackById(req.params.id);
     res.json(feedback);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 删除反馈记录
+app.delete('/api/admin/feedbacks/:id', async (req, res) => {
+  try {
+    await deleteFeedback(req.params.id);
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

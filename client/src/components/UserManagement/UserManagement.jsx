@@ -10,7 +10,7 @@ const UserManagement = () => {
   const [visible, setVisible] = useState(false);
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const [currentRecord, setCurrentRecord] = useState(null);
+  const [, setCurrentRecord] = useState(null);
 
   const [pagination, setPagination] = useState({
     current: 1,
