@@ -84,15 +84,13 @@ const deleteNote = async (noteId) => {
   }
 };
 
-//
-
 // 分页查询所有笔记
 const getNotesByPage = async (page = 1, pageSize = 10) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
     const offset = (page - 1) * pageSize;
     
-    const [rows] = await connection.execute(
+    const [rows] = await connection.query(
       'SELECT * FROM notes ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [pageSize, offset]
     );

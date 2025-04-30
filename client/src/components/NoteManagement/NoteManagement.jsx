@@ -1,28 +1,45 @@
-import React, { useState } from 'react';
-import { Table, Input, Button, Space, Message, Tag } from '@arco-design/web-react';
+import React, { useState, useEffect } from 'react';
+import { Table, Input, Button, Space, Message, Tag, Modal } from '@arco-design/web-react';
 import { IconSearch, IconDelete, IconEdit, IconEye } from '@arco-design/web-react/icon';
 
 const NoteManagement = () => {
-  const [loading,] = useState(false);
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [notes, setNotes] = useState([
-    {
-      id: 1,
-      title: '示例笔记1',
-      author: '测试用户1',
-      status: '已发布',
-      createdAt: '2023-01-01',
-      updatedAt: '2023-01-02',
-    },
-    {
-      id: 2,
-      title: '示例笔记2',
-      author: '测试用户2',
-      status: '草稿',
-      createdAt: '2023-01-03',
-      updatedAt: '2023-01-04',
-    },
-  ]);
+  const [notes, setNotes] = useState([]);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+  const [currentNotebook, setCurrentNotebook] = useState(null);
+
+  const fetchNotes = async (page = 1, pageSize = 10) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:3002/api/admin/notes?page=${page}&pageSize=${pageSize}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('获取笔记列表失败');
+      const data = await response.json();
+      setNotes(data.data);
+      setPagination({
+        current: data.page,
+        pageSize: data.pageSize,
+        total: data.total
+      });
+    } catch (error) {
+      Message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     {
@@ -32,29 +49,38 @@ const NoteManagement = () => {
     },
     {
       title: '作者',
-      dataIndex: 'author',
+      dataIndex: 'user_id',
+    },
+    {
+      title: '内容',
+      dataIndex: 'content',
+      render: (content) => {
+        const cleanContent = content.replace(/<[^>]*>/g, '');
+        return (
+          <span title={cleanContent}>
+            {cleanContent.length > 20 ? `${cleanContent.substring(0, 20)}...` : cleanContent}
+          </span>
+        );
+      },
     },
     {
       title: '状态',
       dataIndex: 'status',
-      render: (status) => (
-        <Tag color={status === '已发布' ? 'green' : 'gray'}>{status}</Tag>
+      render: (status, record) => (
+        <Tag color={record.content === '生成中' ? 'gray' : 'green'}>
+          {record.content === '生成中' ? '草稿' : '已发布'}
+        </Tag>
       ),
       filters: [
         { text: '已发布', value: '已发布' },
         { text: '草稿', value: '草稿' },
       ],
-      onFilter: (value, record) => record.status === value,
+      onFilter: (value, record) => (value === '已发布' ? record.content !== '生成中' : record.content === '生成中'),
     },
     {
       title: '创建时间',
-      dataIndex: 'createdAt',
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    },
-    {
-      title: '更新时间',
-      dataIndex: 'updatedAt',
-      sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+      dataIndex: 'created_at',
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
     },
     {
       title: '操作',
@@ -87,24 +113,121 @@ const NoteManagement = () => {
     },
   ];
 
-  const handleSearch = () => {
-    const filteredNotes = notes.filter(note =>
-      note.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      note.author.toLowerCase().includes(searchText.toLowerCase())
-    );
-    setNotes(filteredNotes);
+  const handleSearch = async () => {
+    if (!searchText) {
+      return fetchNotes(pagination.current, pagination.pageSize);
+    }
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:3002/api/admin/notes-id/${searchText}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('搜索笔记失败');
+      const data = await response.json();
+      setNotes(data);
+      setPagination({
+        current: 1,
+        pageSize: 1,
+        total: data.data?.length || 0
+      });
+    } catch (error) {
+      Message.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleView = (record) => {
-    Message.info(`查看笔记: ${record.title}`);
+  const handleView = async (record) => {
+    try {
+      
+      Modal.info({
+        title: '笔记详情',
+        content: (
+          <div>
+            <p><strong>作者:</strong> {record.user_id}</p>
+            <p><strong>标题:</strong> {record.title}</p>
+            <p><strong>内容:</strong> {record.content.replace(/<[^>]*>/g, '')}</p>
+            <p><strong>创建时间:</strong> {record.created_at}</p>
+             </div>
+        )
+      });
+    } catch (error) {
+      Message.error(error.message);
+    }
   };
 
   const handleEdit = (record) => {
-    Message.info(`编辑笔记: ${record.title}`);
+    setCurrentNotebook(record);
+    Modal.confirm({
+      title: '编辑笔记',
+      content: (
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Input 
+            defaultValue={record.title} 
+            onChange={(value) => setCurrentNotebook({...record, title: value})}
+            style={{ width: '100%' }}
+          />
+          <Input.TextArea 
+            defaultValue={record.content} 
+            onChange={(value) => setCurrentNotebook({...record, content: value})}
+            style={{ width: '100%' }}
+            autoSize={{ minRows: 4, maxRows: 8 }}
+          />
+        </Space>
+      ),
+      onOk: async () => {
+        try {
+          const response = await fetch(`http://localhost:3002/api/notes/${record.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+              title: currentNotebook.title,
+              content: currentNotebook.content
+            })
+          });
+          
+          if (!response.ok) throw new Error('更新笔记失败');
+          
+          Message.success('笔记更新成功');
+          fetchNotes(pagination.current, pagination.pageSize);
+        } catch (error) {
+          Message.error(error.message);
+        }
+      }
+    });
   };
 
-  const handleDelete = (record) => {
-    Message.info(`删除笔记: ${record.title}`);
+  const handleDelete = async (record) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除笔记"${record.title}"吗?`,
+      okText: '确认',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const response = await fetch(`http://localhost:3002/api/notes/${record.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (!response.ok) throw new Error('删除笔记失败');
+          
+          Message.success('笔记删除成功');
+          fetchNotes(pagination.current, pagination.pageSize);
+        } catch (error) {
+          Message.error(error.message);
+        }
+      }
+    });
   };
 
   return (
@@ -113,7 +236,7 @@ const NoteManagement = () => {
         <Space>
           <Input
             allowClear
-            placeholder="搜索笔记标题或作者"
+            placeholder="搜索作者ID"
             value={searchText}
             onChange={setSearchText}
             style={{ width: 300 }}

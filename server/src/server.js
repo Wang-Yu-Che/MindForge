@@ -8,7 +8,7 @@ import authMiddleware from './middleware/auth.js';
 import { uploadToOSS, saveFeedback, getAllFeedbacks,deleteFeedback,getFeedbackById } from './feedbackService.js';
 import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage } from './sourceService.js';
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook, getNotebooksByPage } from './notebookService.js';
-import { createNote, getNotes, updateNote, deleteNote } from './notesService.js';
+import { createNote, getNotes, updateNote, deleteNote,getNotesByPage } from './notesService.js';
 import fileUpload from 'express-fileupload';
 
 const app = express();
@@ -455,6 +455,19 @@ app.get('/api/admin/notebooks', async (req, res) => {
   }
 });
 
+// 分页查询所有笔记
+app.get('/api/admin/notes', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const notes = await getNotesByPage(page, pageSize);
+    res.json(notes);
+  } catch (error) {
+    console.error('分页查询笔记失败:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 app.put('/api/notebooks/:id', async (req, res) => {
@@ -549,6 +562,17 @@ app.get('/api/notes', async (req, res) => {
     const userId = req.user.userId;
     const folderName = req.query.folderName;
     const notes = await getNotes(userId, folderName);
+    res.json(notes);
+  } catch (error) {
+    console.error('获取笔记列表失败:', error);
+    res.status(500).json({ error: '获取笔记列表失败' });
+  }
+});
+
+app.get('/api/admin/notes-id/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const notes = await getNotes(userId);
     res.json(notes);
   } catch (error) {
     console.error('获取笔记列表失败:', error);
