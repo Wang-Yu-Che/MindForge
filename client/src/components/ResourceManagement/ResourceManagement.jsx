@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Space, Message, Tag } from '@arco-design/web-react';
-import { IconSearch, IconDelete, IconEdit, IconDownload } from '@arco-design/web-react/icon';
+import { IconSearch, IconDelete, IconDownload } from '@arco-design/web-react/icon';
 
 const ResourceManagement = () => {
   const [searchText, setSearchText] = useState('');

@@ -10,6 +10,7 @@ import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage,delet
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook, getNotebooksByPage } from './notebookService.js';
 import { createNote, getNotes, updateNote, deleteNote,getNotesByPage } from './notesService.js';
 import fileUpload from 'express-fileupload';
+import { getAllStats } from './getAllStats.js';
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,17 @@ app.use(authMiddleware);
 
 // 存储对话历史
 const conversations = new Map();
+
+// 获取系统统计数据
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const stats = await getAllStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('获取统计数据失败:', error);
+    res.status(500).json({ error: '获取统计数据失败' });
+  }
+});
 
 // 聊天路由
 app.post('/api/chat', async (req, res) => {

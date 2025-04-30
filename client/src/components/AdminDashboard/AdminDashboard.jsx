@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import UserManagement from '../UserManagement/UserManagement';
 import NoteManagement from '../NoteManagement/NoteManagement';
 import NoteBookManagement from '../NotebookManagement/NotebookManagement';
@@ -19,73 +18,83 @@ import {
   IconApps,
   IconFile
 } from '@arco-design/web-react/icon';
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer,
+  BarChart, Bar, PieChart, Pie, Cell
+} from 'recharts';
+
 const { Row } = Grid;
 const { Title, Text } = Typography;
 const { Sider, Header, Content } = Layout;
 
 const AdminDashboard = () => {
   const [currentView, setCurrentView] = useState('dashboard');
-  const location = useLocation();
   const [statistics, setStatistics] = useState({
     users: 0,
     notes: 0,
     resources: 0
   });
+  const [chartData, setChartData] = useState([]);
+  const [topUsers, setTopUsers] = useState([]);
+  const [fileDistribution, setFileDistribution] = useState([]);
+  const [feedbackPref, setFeedbackPref] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 模拟从API获取统计数据
-    const fetchStatistics = () => {
-      // 这里应该替换为实际的API调用
-      setTimeout(() => {
-        setStatistics({
-          users: 128,
-          notes: 356,
-          resources: 89
+    const fetchStatistics = async () => {
+      try {
+        const response = await fetch(`http://localhost:3002/api/admin/stats`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
+        if (!response.ok) throw new Error('获取统计数据失败');
+        const data = await response.json();
+
+        setStatistics({
+          users: data.totalCounts.userCount,
+          notes: data.totalCounts.noteCount,
+          resources: data.totalCounts.fileCount
+        });
+
+        const dateMap = {};
+        const process = (key) => {
+          data.dailyStats[key].forEach(item => {
+            const date = new Date(item.date).toISOString().slice(0, 10);
+            if (!dateMap[date]) dateMap[date] = { date };
+            dateMap[date][key] = item.count;
+          });
+        };
+        ['users', 'notes', 'files', 'feedback'].forEach(process);
+
+        setChartData(Object.values(dateMap).sort((a, b) => new Date(a.date) - new Date(b.date)));
+        setTopUsers(data.topUsersByNotes);
+        setFileDistribution(data.fileLocationDistribution);
+        setFeedbackPref(data.feedbackEmailUpdates);
+      } catch (error) {
+        console.error('获取统计数据失败:', error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
     fetchStatistics();
   }, []);
 
   const menuItems = [
-    {
-      key: 'dashboard',
-      icon: <IconUser />,
-      label: '页首'
-    },
-    {
-      key: 'users',
-      icon: <IconUser />,
-      label: '用户管理'
-    },
-    {
-        key: 'notebooks',
-        icon: <IconUser />,
-        label: '知识库管理'
-      },
-    {
-      key: 'notes',
-      icon: <IconApps />,
-      label: '笔记管理'
-    },
-    {
-      key: 'resources',
-      icon: <IconFile />,
-      label: '资源管理'
-    },
-    {
-      key: 'feedback',
-      icon: <IconFile />,
-      label: '用户反馈'
-    }
+    { key: 'dashboard', icon: <IconUser />, label: '页首' },
+    { key: 'users', icon: <IconUser />, label: '用户管理' },
+    { key: 'notebooks', icon: <IconUser />, label: '知识库管理' },
+    { key: 'notes', icon: <IconApps />, label: '笔记管理' },
+    { key: 'resources', icon: <IconFile />, label: '资源管理' },
+    { key: 'feedback', icon: <IconFile />, label: '用户反馈' }
   ];
+
+  const COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'];
 
   return (
     <Layout style={{ height: '100vh' }}>
-      <Sider breakpoint="lg" collapsible style={{ paddingTop: 64 }}>
+      <Sider breakpoint="lg" collapsible>
         <div style={{ padding: 20, fontSize: 20, color: '#fff' }}>管理后台</div>
         <Menu
           selectedKeys={[currentView]}
@@ -121,7 +130,9 @@ const AdminDashboard = () => {
               {menuItems.find(item => item.key === currentView)?.label || '首页'}
             </Breadcrumb.Item>
           </Breadcrumb>
+
           {currentView === 'dashboard' && (
+            <>
               <Row gutter={16} style={{ marginBottom: 20 }}>
                 <Grid.Col span={8}>
                   <Card>
@@ -148,12 +159,96 @@ const AdminDashboard = () => {
                   </Card>
                 </Grid.Col>
               </Row>
-            )}
-            {currentView === 'users' && <UserManagement />}
-            {currentView === 'notes' && <NoteManagement />}
-            {currentView === 'notebooks' && <NoteBookManagement />}
-            {currentView === 'resources' && <ResourceManagement />}
-            {currentView === 'feedback' && <FeedbackManagement />}
+
+              <Card style={{ marginBottom: 20 }}>
+                <Title heading={6}>每日新增趋势</Title>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="users" name="新增用户" stroke="#4e79a7" />
+                    <Line type="monotone" dataKey="notes" name="新增笔记" stroke="#f28e2b" />
+                    <Line type="monotone" dataKey="files" name="新增资源" stroke="#e15759" />
+                    <Line type="monotone" dataKey="feedback" name="新增反馈" stroke="#59a14f" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card style={{ marginBottom: 20 }}>
+                <Title heading={6}>Top 用户笔记数</Title>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={topUsers}>
+                    <XAxis dataKey="email" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="noteCount" fill="#4e79a7" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Row gutter={16}>
+                <Grid.Col span={12}>
+                  <Card>
+                    <Title heading={6}>文件位置分布</Title>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={fileDistribution}
+                          dataKey="count"
+                          nameKey="location"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {fileDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Card>
+                </Grid.Col>
+
+                <Grid.Col span={12}>
+                  <Card>
+                    <Title heading={6}>用户反馈邮件订阅偏好</Title>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={feedbackPref.map(i => ({
+                            name: i.email_updates ? '愿意接收' : '不愿接收',
+                            value: i.count
+                          }))}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {feedbackPref.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Card>
+                </Grid.Col>
+              </Row>
+            </>
+          )}
+
+          {currentView === 'users' && <UserManagement />}
+          {currentView === 'notes' && <NoteManagement />}
+          {currentView === 'notebooks' && <NoteBookManagement />}
+          {currentView === 'resources' && <ResourceManagement />}
+          {currentView === 'feedback' && <FeedbackManagement />}
         </Content>
       </Layout>
     </Layout>
