@@ -192,14 +192,25 @@ const Header = () => {
           <nav className="nav-links">
             {isWelcomePage ? (
               <>
-              <div>
+                <div>
+                <NavLink to="/forum" className={({ isActive }) => isActive ? 'active' : ''}>
+                  <i className="fas fa-comments"></i>
+                  交流论坛
+                </NavLink>
+                </div>
+                <div>
+                <NavLink to="/note-book-list" className={({ isActive }) => isActive ? 'active' : ''}>
+                  <i className="fas fa-comments"></i>
+                  我的笔记本
+                </NavLink>
+                </div>
+                <div>
                 <button 
                   className="settings-button" 
                   onClick={() => setIsPunchModalVisible(true)}
-                  style={{ marginRight: '10px' }}
-                >
+                 >
                   <i className="fas fa-calendar-check"></i>
-                  每日打卡
+                  ☀每日打卡☀
                 </button>
                 </div>
                 <div ref={settingsRef} style={{ position: 'relative' }}>

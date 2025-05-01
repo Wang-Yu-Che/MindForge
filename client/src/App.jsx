@@ -18,6 +18,8 @@ import Features from './components/App/Features/Features';
 import Notebook from './components/Note/Note'
 import DemoNotebook from './components/DemoNote/DemoNote';
 import NoteBookList from './components/NoteBookList/NotebookList';
+import ForumPage from './components/ForumPage/ForumPage';
+import DetailPage from './components/DetailPage/DetailPage';
 import PrivateRoute from './components/PrivateRoute/PrivateRoute';
 import { ThemeProvider } from './contexts/ThemeContext';
 import NotFound from './components/NotFound/NotFound';
@@ -47,12 +49,13 @@ function App() {
            <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/notes" element={<NoteManagement />} />
           <Route path="/admin/resources" element={<ResourceManagement />} />
-      
           <Route path="/admin/dashboard/*" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           <Route path="/welcome" element={<PrivateRoute><Welcome /></PrivateRoute>} />
           <Route path="/notebook" element={<PrivateRoute><Notebook /></PrivateRoute>} />
           <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
           <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
+          <Route path="/forum" element={<PrivateRoute><ForumPage /></PrivateRoute>} />
+          <Route path="/detail" element={<PrivateRoute><DetailPage /></PrivateRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </div>

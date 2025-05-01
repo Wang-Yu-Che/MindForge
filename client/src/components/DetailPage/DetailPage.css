@@ -1,0 +1,28 @@
+.post-container {
+    padding:84px;
+    background-color: #f7f8fa;
+    min-height: 100vh;
+  }
+  
+  .post-card {
+    margin-bottom: 24px;
+  }
+  
+  .post-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  
+  .post-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 16px;
+  }
+  
+  .comment-section {
+    background-color: #ffffff;
+  }
+  

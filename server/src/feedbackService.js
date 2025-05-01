@@ -17,6 +17,8 @@ const uploadToOSS = async (base64Image, type = 'feedback', folderName,fileName =
    filename = `avatar/${uuidv4()}.png`;
   } else if (type === 'sources' && folderName) {
    filename = `sources/${folderName}/${fileName}`;
+  } else if (type === 'show'){
+   filename = `/show/${uuidv4()}.png`;
   } else {
    filename = `feedback/screenshots/${uuidv4()}.png`;
   }

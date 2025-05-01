@@ -26,6 +26,7 @@ const Login = () => {
       if (data.token) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('userId', data.userId);
+        localStorage.setItem('email',username)
         Message.success('登录成功');
         navigate('/admin/dashboard');
       } else {

@@ -54,6 +54,7 @@ const Login = () => {
         // 清除旧的token
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
+        localStorage.removeItem('email')
 
         const headers = {
           'Content-Type': 'application/json'
@@ -88,6 +89,7 @@ const Login = () => {
         // 存储新token到localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('userId', data.userId);
+        localStorage.setItem('email',formData.email)
         
         // 查询用户笔记本数量
         try {

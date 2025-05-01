@@ -4,6 +4,9 @@ import NoteManagement from '../NoteManagement/NoteManagement';
 import NoteBookManagement from '../NotebookManagement/NotebookManagement';
 import ResourceManagement from '../ResourceManagement/ResourceManagement';
 import FeedbackManagement from '../FeedbackManagement/FeedbackManagement';
+import CementManagement from '../CementManagement/CementManagement';
+import CommentManagement from '../CommentManagement/CommentManagement';
+import ForumPageManagement from '../ForumPageManagement/ForumPageManagement';
 import {
   Layout,
   Menu,
@@ -87,7 +90,10 @@ const AdminDashboard = () => {
     { key: 'notebooks', icon: <IconUser />, label: '知识库管理' },
     { key: 'notes', icon: <IconApps />, label: '笔记管理' },
     { key: 'resources', icon: <IconFile />, label: '资源管理' },
-    { key: 'feedback', icon: <IconFile />, label: '用户反馈' }
+    { key: 'feedback', icon: <IconFile />, label: '用户反馈' },
+    { key: 'cement', icon: <IconFile />, label: '公告管理' },
+    { key: 'comment', icon: <IconFile />, label: '评论管理' },
+    { key: 'forum', icon: <IconFile />, label: '帖子管理' }
   ];
 
   const COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'];
@@ -249,6 +255,9 @@ const AdminDashboard = () => {
           {currentView === 'notebooks' && <NoteBookManagement />}
           {currentView === 'resources' && <ResourceManagement />}
           {currentView === 'feedback' && <FeedbackManagement />}
+          {currentView === 'cement' && <CementManagement />}
+          {currentView === 'comment' && <CommentManagement />}
+          {currentView === 'forum' && <ForumPageManagement />}
         </Content>
       </Layout>
     </Layout>

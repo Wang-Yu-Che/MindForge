@@ -1,0 +1,6 @@
+CREATE TABLE announcements (
+  id INT PRIMARY KEY AUTO_INCREMENT COMMENT '公告ID',
+  title VARCHAR(255) NOT NULL COMMENT '公告标题',
+  content TEXT COMMENT '公告内容',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+);

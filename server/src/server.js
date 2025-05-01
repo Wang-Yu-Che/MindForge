@@ -9,6 +9,9 @@ import { uploadToOSS, saveFeedback, getAllFeedbacks,deleteFeedback,getFeedbackBy
 import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage,deleteSource, updateSource,searchSourcesByName } from './sourceService.js';
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook, getNotebooksByPage } from './notebookService.js';
 import { createNote, getNotes, updateNote, deleteNote,getNotesByPage } from './notesService.js';
+import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, getAnnouncementsByPage,searchAnnouncementsByTitle } from './cementsService.js';
+import { createComment, getComments, updateComment, deleteComment, getCommentsByPage, searchCommentsByEmail} from './commentService.js';
+import { createPost, getPosts, updatePost, deletePost, getPostsByPage, searchPostsByEmail } from './forumPageService.js';
 import fileUpload from 'express-fileupload';
 import { getAllStats } from './getAllStats.js';
 import { handlePunch,getPunchRecords} from './PunchLogsService.js';
@@ -79,7 +82,81 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
-//
+// 公告管理路由
+// 创建公告
+app.post('/api/admin/announcements', async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const announcementId = await createAnnouncement(title, content);
+    res.json({ id: announcementId });
+  } catch (error) {
+    console.error('创建公告失败:', error);
+    res.status(500).json({ error: '创建公告失败', message: error.message });
+  }
+});
+
+// 获取所有公告
+app.get('/api/announcements', async (req, res) => {
+  try {
+    const announcements = await getAnnouncements();
+    res.json(announcements);
+  } catch (error) {
+    console.error('获取公告失败:', error);
+    res.status(500).json({ error: '获取公告失败', message: error.message });
+  }
+});
+
+// 分页查询公告
+app.get('/api/admin/announcements', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const result = await getAnnouncementsByPage(page, pageSize);
+    res.json(result);
+  } catch (error) {
+    console.error('分页查询公告失败:', error);
+    res.status(500).json({ error: '分页查询公告失败', message: error.message });
+  }
+});
+
+// 根据标题搜索公告
+app.get('/api/admin/announcements-title/:keyword', async (req, res) => {
+  try {
+    const keyword = req.params.keyword;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const result = await searchAnnouncementsByTitle(keyword, page, pageSize);
+    res.json(result);
+  } catch (error) {
+    console.error('搜索公告失败:', error);
+    res.status(500).json({ error: '搜索公告失败', message: error.message });
+  }
+});
+
+// 更新公告
+app.put('/api/admin/announcements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content } = req.body;
+    await updateAnnouncement(id, title, content);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('更新公告失败:', error);
+    res.status(500).json({ error: '更新公告失败', message: error.message });
+  }
+});
+
+// 删除公告
+app.delete('/api/admin/announcements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteAnnouncement(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除公告失败:', error);
+    res.status(500).json({ error: '删除公告失败', message: error.message });
+  }
+});
 
 // 聊天路由
 app.post('/api/chat', async (req, res) => {
@@ -318,7 +395,7 @@ app.post('/api/auth', async (req, res) => {
       res.json({ token, userId });
     } else if (action === 'login') {
       const { userId, token } = await loginUser(email, password);
-      res.json({ token, userId });
+      res.json({ token, userId});
     } else {
       throw new Error('无效的操作类型');
     }
@@ -375,6 +452,32 @@ app.post('/api/notes/import', async (req, res) => {
     res.status(500).json({
       error: '导入数据失败',
       message: error.message
+    });
+  }
+});
+
+// 单独上传图片到OSS的路由
+app.post('/api/upload-to-oss', async (req, res) => {
+  try {
+    if (!req.files || !req.files.photo) {
+      return res.status(400).json({ error: '请上传文件' });
+    }
+    
+    const avatar = req.files.photo;
+    
+    
+    // 将头像文件转换为base64格式
+    const base64Image = `data:${avatar.mimetype};base64,${avatar.data.toString('base64')}`;
+    
+    // 使用OSS上传头像
+    const avatarUrl = await uploadToOSS(base64Image, 'show');
+    
+    res.json({ avatarUrl });
+  } catch (error) {
+    console.error('上传到OSS失败:', error);
+    res.status(500).json({ 
+      error: '上传到OSS失败',
+      message: error.message 
     });
   }
 });
@@ -536,6 +639,158 @@ app.get('/api/admin/notes', async (req, res) => {
   } catch (error) {
     console.error('分页查询笔记失败:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// 论坛帖子管理路由
+// 创建帖子
+app.post('/api/admin/posts', async (req, res) => {
+  try {
+    const { title, content, image_url, created_by } = req.body;
+    const postId = await createPost(title, content, image_url, created_by);
+    res.json({ id: postId });
+  } catch (error) {
+    console.error('创建帖子失败:', error);
+    res.status(500).json({ error: '创建帖子失败', message: error.message });
+  }
+});
+
+// 获取所有帖子
+app.get('/api/admin/posts', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    res.json(posts);
+  } catch (error) {
+    console.error('获取帖子失败:', error);
+    res.status(500).json({ error: '获取帖子失败', message: error.message });
+  }
+});
+
+// 分页查询帖子
+app.get('/api/admin/posts-page', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const result = await getPostsByPage(page, pageSize);
+    res.json(result);
+  } catch (error) {
+    console.error('分页查询帖子失败:', error);
+    res.status(500).json({ error: '分页查询帖子失败', message: error.message });
+  }
+});
+
+// 根据邮箱搜索帖子
+app.get('/api/admin/posts-email/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const result = await searchPostsByEmail(email, page, pageSize);
+    res.json(result);
+  } catch (error) {
+    console.error('搜索帖子失败:', error);
+    res.status(500).json({ error: '搜索帖子失败', message: error.message });
+  }
+});
+
+// 更新帖子
+app.put('/api/admin/posts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content, image_url } = req.body;
+    await updatePost(id, title, content, image_url);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('更新帖子失败:', error);
+    res.status(500).json({ error: '更新帖子失败', message: error.message });
+  }
+});
+
+// 删除帖子
+app.delete('/api/admin/posts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deletePost(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除帖子失败:', error);
+    res.status(500).json({ error: '删除帖子失败', message: error.message });
+  }
+});
+
+// 评论管理路由
+// 创建评论
+app.post('/api/comments', async (req, res) => {
+  try {
+    const { post_id, content, is_anonymous, user_email } = req.body;
+    const commentId = await createComment(post_id, content, is_anonymous, user_email);
+    res.json({ id: commentId });
+  } catch (error) {
+    console.error('创建评论失败:', error);
+    res.status(500).json({ error: '创建评论失败', message: error.message });
+  }
+});
+
+// 获取所有评论
+app.get('/api/comments', async (req, res) => {
+  try {
+    const comments = await getComments();
+    res.json(comments);
+  } catch (error) {
+    console.error('获取评论失败:', error);
+    res.status(500).json({ error: '获取评论失败', message: error.message });
+  }
+});
+
+// 分页查询评论
+app.get('/api/admin/comments', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const result = await getCommentsByPage(page, pageSize);
+    res.json(result);
+  } catch (error) {
+    console.error('分页查询评论失败:', error);
+    res.status(500).json({ error: '分页查询评论失败', message: error.message });
+  }
+});
+
+// 根据邮箱搜索评论
+app.get('/api/admin/comments-email/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const result = await searchCommentsByEmail(email, page, pageSize);
+    res.json(result);
+  } catch (error) {
+    console.error('搜索评论失败:', error);
+    res.status(500).json({ error: '搜索评论失败', message: error.message });
+  }
+});
+
+// 更新评论
+app.put('/api/admin/comments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    await updateComment(id, content);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('更新评论失败:', error);
+    res.status(500).json({ error: '更新评论失败', message: error.message });
+  }
+});
+
+// 删除评论
+app.delete('/api/admin/comments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteComment(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除评论失败:', error);
+    res.status(500).json({ error: '删除评论失败', message: error.message });
   }
 });
 

@@ -215,7 +215,7 @@ const FeedbackManagement = () => {
         {currentFeedback && (
           <div>
             <p><strong>用户ID：</strong>{currentFeedback.user_id}</p>
-            <p><strong>反馈内容：</strong>
+            <p style={{ wordBreak: 'break-all' }}><strong>反馈内容：</strong>
               <div style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {currentFeedback.content}
               </div>

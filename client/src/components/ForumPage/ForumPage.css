@@ -1,0 +1,59 @@
+.ccf-container {
+    padding: 84px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+  
+  .ccf-carousel-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .carousel-img {
+    width: 700px;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .carousel-img:hover {
+    transform: scale(1.01);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+  
+  .ccf-signup-box {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    min-width: 250px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .ccf-signup-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+  }
+  
+  .ccf-news-section {
+    margin-top: 40px;
+  }
+  
+  .news-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  .news-img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  

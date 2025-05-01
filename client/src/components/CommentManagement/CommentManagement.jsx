@@ -2,33 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Space, Message, Tag, Modal } from '@arco-design/web-react';
 import { IconSearch, IconDelete, IconEdit, IconEye } from '@arco-design/web-react/icon';
 
-const NoteManagement = () => {
+const CommentManagement = () => {
   useEffect(() => {
-    fetchNotes();
+    fetchComments();
   }, []);
 
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [notes, setNotes] = useState([]);
+  const [comments, setComments] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0
   });
-  const [currentNotebook, setCurrentNotebook] = useState(null);
+  const [currentComment, setCurrentComment] = useState(null);
 
-  const fetchNotes = async (page = 1, pageSize = 10) => {
+  const fetchComments = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3002/api/admin/notes?page=${page}&pageSize=${pageSize}`, {
+      const response = await fetch(`http://localhost:3002/api/admin/comments?page=${page}&pageSize=${pageSize}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (!response.ok) throw new Error('获取笔记列表失败');
+      if (!response.ok) throw new Error('获取评论列表失败');
       const data = await response.json();
-      setNotes(data.data);
+      setComments(data.data);
       setPagination({
         current: data.page,
         pageSize: data.pageSize,
@@ -43,42 +43,29 @@ const NoteManagement = () => {
 
   const columns = [
     {
-      title: '标题',
-      dataIndex: 'title',
-      sorter: (a, b) => a.title.localeCompare(b.title),
+      title: '用户邮箱',
+      dataIndex: 'user_email',
     },
     {
-      title: '作者',
-      dataIndex: 'user_id',
-    },
-    {
-      title: '内容',
-      dataIndex: 'content',
-      render: (content) => {
-        const cleanContent = content.replace(/<[^>]*>/g, '');
-        return (
-          <span title={cleanContent}>
-            {cleanContent.length > 20 ? `${cleanContent.substring(0, 20)}...` : cleanContent}
-          </span>
-        );
-      },
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      render: (status, record) => (
-        <Tag color={record.content === '生成中' ? 'gray' : 'green'}>
-          {record.content === '生成中' ? '草稿' : '已发布'}
+      title: '是否匿名',
+      dataIndex: 'is_anonymous',
+      render: (isAnonymous) => (
+        <Tag color={isAnonymous ? 'gray' : 'green'}>
+          {isAnonymous ? '匿名' : '实名'}
         </Tag>
       ),
-      filters: [
-        { text: '已发布', value: '已发布' },
-        { text: '草稿', value: '草稿' },
-      ],
-      onFilter: (value, record) => (value === '已发布' ? record.content !== '生成中' : record.content === '生成中'),
     },
     {
-      title: '创建时间',
+      title: '评论内容',
+      dataIndex: 'content',
+      render: (content) => (
+        <span title={content}>
+          {content.length > 20 ? `${content.substring(0, 20)}...` : content}
+        </span>
+      ),
+    },
+    {
+      title: '评论时间',
       dataIndex: 'created_at',
       sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
     },
@@ -115,20 +102,20 @@ const NoteManagement = () => {
 
   const handleSearch = async () => {
     if (!searchText) {
-      return fetchNotes(pagination.current, pagination.pageSize);
+      return fetchComments(pagination.current);
     }
     
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3002/api/admin/notes-id/${searchText}`, {
+      const response = await fetch(`http://localhost:3002/api/admin/comments-email/${searchText}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (!response.ok) throw new Error('搜索笔记失败');
+      if (!response.ok) throw new Error('搜索评论失败');
       const data = await response.json();
-      setNotes(data);
+      setComments(data.data);
       setPagination({
         current: 1,
         pageSize: 1,
@@ -143,16 +130,16 @@ const NoteManagement = () => {
 
   const handleView = async (record) => {
     try {
-      
       Modal.info({
-        title: '笔记详情',
+        title: '评论详情',
         content: (
           <div>
-            <p><strong>作者:</strong> {record.user_id}</p>
-            <p><strong>标题:</strong> {record.title}</p>
-            <p style={{ wordBreak: 'break-all' }}><strong>内容:</strong> {record.content.replace(/<[^>]*>/g, '')}</p>
-            <p><strong>创建时间:</strong> {record.created_at}</p>
-             </div>
+            <p><strong>帖子ID:</strong> {record.post_id}</p>
+            <p style={{ wordBreak: 'break-all' }}><strong>内容:</strong> {record.content}</p>
+            <p><strong>是否匿名:</strong> {record.is_anonymous ? '是' : '否'}</p>
+            <p><strong>用户邮箱:</strong> {record.user_email || '匿名用户'}</p>
+            <p><strong>评论时间:</strong> {record.created_at}</p>
+          </div>
         )
       });
     } catch (error) {
@@ -161,19 +148,14 @@ const NoteManagement = () => {
   };
 
   const handleEdit = (record) => {
-    setCurrentNotebook(record);
+    setCurrentComment(record);
     Modal.confirm({
-      title: '编辑笔记',
+      title: '编辑评论',
       content: (
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Input 
-            defaultValue={record.title} 
-            onChange={(value) => setCurrentNotebook({...record, title: value})}
-            style={{ width: '100%' }}
-          />
           <Input.TextArea 
-            defaultValue={record.content} 
-            onChange={(value) => setCurrentNotebook({...record, content: value})}
+            defaultValue={record?.content || ''} 
+            onChange={(value) => setCurrentComment({...record, content: value})}
             style={{ width: '100%' }}
             autoSize={{ minRows: 4, maxRows: 8 }}
           />
@@ -181,22 +163,25 @@ const NoteManagement = () => {
       ),
       onOk: async () => {
         try {
-          const response = await fetch(`http://localhost:3002/api/notes/${record.id}`, {
+          if (!currentComment?.content) {
+            Message.error('评论内容不能为空');
+            return;
+          }
+          const response = await fetch(`http://localhost:3002/api/admin/comments/${record.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({
-              title: currentNotebook.title,
-              content: currentNotebook.content
+              content: currentComment?.content || ''
             })
           });
           
-          if (!response.ok) throw new Error('更新笔记失败');
+          if (!response.ok) throw new Error('更新评论失败');
           
-          Message.success('笔记更新成功');
-          fetchNotes(pagination.current, pagination.pageSize);
+          Message.success('评论更新成功');
+          fetchComments(pagination.current, pagination.pageSize);
         } catch (error) {
           Message.error(error.message);
         }
@@ -207,22 +192,22 @@ const NoteManagement = () => {
   const handleDelete = async (record) => {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除笔记"${record.title}"吗?`,
+      content: `确定要删除这条评论吗?`,
       okText: '确认',
       cancelText: '取消',
       onOk: async () => {
         try {
-          const response = await fetch(`http://localhost:3002/api/notes/${record.id}`, {
+          const response = await fetch(`http://localhost:3002/api/admin/comments/${record.id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
           
-          if (!response.ok) throw new Error('删除笔记失败');
+          if (!response.ok) throw new Error('删除评论失败');
           
-          Message.success('笔记删除成功');
-          fetchNotes(pagination.current, pagination.pageSize);
+          Message.success('评论删除成功');
+          fetchComments(pagination.current, pagination.pageSize);
         } catch (error) {
           Message.error(error.message);
         }
@@ -231,12 +216,12 @@ const NoteManagement = () => {
   };
 
   return (
-    <div className="note-management-container">
-      <div className="note-management-header" style={{ marginBottom: 16 }}>
+    <div className="comment-management-container">
+      <div className="comment-management-header" style={{ marginBottom: 16 }}>
         <Space>
           <Input
             allowClear
-            placeholder="搜索作者ID"
+            placeholder="搜索用户邮箱"
             value={searchText}
             onChange={setSearchText}
             style={{ width: 300 }}
@@ -247,15 +232,14 @@ const NoteManagement = () => {
         </Space>
       </div>
       
-
       <Table
         loading={loading}
         columns={columns}
-        data={notes}
+        data={comments}
         rowKey="id"
         border={false}
         pagination={{
-          total: notes.length,
+          total: comments.length,
           pageSize: 10,
           showTotal: true,
         }}
@@ -264,4 +248,4 @@ const NoteManagement = () => {
   );
 };
 
-export default NoteManagement;
+export default CommentManagement;

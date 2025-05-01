@@ -1,34 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Input, Button, Space, Message, Tag, Modal } from '@arco-design/web-react';
+import { Table, Input, Button, Space, Message, Modal } from '@arco-design/web-react';
 import { IconSearch, IconDelete, IconEdit, IconEye } from '@arco-design/web-react/icon';
 
-const NoteManagement = () => {
+const CementManagement = () => {
   useEffect(() => {
-    fetchNotes();
+    fetchAnnouncements();
   }, []);
 
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [notes, setNotes] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0
   });
-  const [currentNotebook, setCurrentNotebook] = useState(null);
+  const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const fetchNotes = async (page = 1, pageSize = 10) => {
+  const fetchAnnouncements = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3002/api/admin/notes?page=${page}&pageSize=${pageSize}`, {
+      const response = await fetch(`http://localhost:3002/api/admin/announcements?page=${page}&pageSize=${pageSize}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (!response.ok) throw new Error('获取笔记列表失败');
+      if (!response.ok) throw new Error('获取公告列表失败');
       const data = await response.json();
-      setNotes(data.data);
+      setAnnouncements(data.data);
       setPagination({
         current: data.page,
         pageSize: data.pageSize,
@@ -48,10 +49,6 @@ const NoteManagement = () => {
       sorter: (a, b) => a.title.localeCompare(b.title),
     },
     {
-      title: '作者',
-      dataIndex: 'user_id',
-    },
-    {
       title: '内容',
       dataIndex: 'content',
       render: (content) => {
@@ -62,20 +59,6 @@ const NoteManagement = () => {
           </span>
         );
       },
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      render: (status, record) => (
-        <Tag color={record.content === '生成中' ? 'gray' : 'green'}>
-          {record.content === '生成中' ? '草稿' : '已发布'}
-        </Tag>
-      ),
-      filters: [
-        { text: '已发布', value: '已发布' },
-        { text: '草稿', value: '草稿' },
-      ],
-      onFilter: (value, record) => (value === '已发布' ? record.content !== '生成中' : record.content === '生成中'),
     },
     {
       title: '创建时间',
@@ -115,20 +98,20 @@ const NoteManagement = () => {
 
   const handleSearch = async () => {
     if (!searchText) {
-      return fetchNotes(pagination.current, pagination.pageSize);
+      return fetchAnnouncements(pagination.current, pagination.pageSize);
     }
     
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3002/api/admin/notes-id/${searchText}`, {
+      const response = await fetch(`http://localhost:3002/api/admin/announcements-title/${searchText}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (!response.ok) throw new Error('搜索笔记失败');
+      if (!response.ok) throw new Error('搜索公告失败');
       const data = await response.json();
-      setNotes(data);
+      setAnnouncements(data.data);
       setPagination({
         current: 1,
         pageSize: 1,
@@ -145,14 +128,13 @@ const NoteManagement = () => {
     try {
       
       Modal.info({
-        title: '笔记详情',
+        title: '公告详情',
         content: (
           <div>
-            <p><strong>作者:</strong> {record.user_id}</p>
             <p><strong>标题:</strong> {record.title}</p>
             <p style={{ wordBreak: 'break-all' }}><strong>内容:</strong> {record.content.replace(/<[^>]*>/g, '')}</p>
             <p><strong>创建时间:</strong> {record.created_at}</p>
-             </div>
+          </div>
         )
       });
     } catch (error) {
@@ -161,19 +143,20 @@ const NoteManagement = () => {
   };
 
   const handleEdit = (record) => {
-    setCurrentNotebook(record);
+    setIsEditing(true);
+    setCurrentAnnouncement(record);
     Modal.confirm({
-      title: '编辑笔记',
+      title: '编辑公告',
       content: (
         <Space direction="vertical" style={{ width: '100%' }}>
           <Input 
-            defaultValue={record.title} 
-            onChange={(value) => setCurrentNotebook({...record, title: value})}
+            defaultValue={record?.title || ''} 
+            onChange={(value) => setCurrentAnnouncement({...record, title: value})}
             style={{ width: '100%' }}
           />
           <Input.TextArea 
-            defaultValue={record.content} 
-            onChange={(value) => setCurrentNotebook({...record, content: value})}
+            defaultValue={record?.content || ''} 
+            onChange={(value) => setCurrentAnnouncement({...record, content: value})}
             style={{ width: '100%' }}
             autoSize={{ minRows: 4, maxRows: 8 }}
           />
@@ -181,48 +164,49 @@ const NoteManagement = () => {
       ),
       onOk: async () => {
         try {
-          const response = await fetch(`http://localhost:3002/api/notes/${record.id}`, {
+          const response = await fetch(`http://localhost:3002/api/admin/announcements/${record.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({
-              title: currentNotebook.title,
-              content: currentNotebook.content
+              title: currentAnnouncement.title,
+              content: currentAnnouncement.content
             })
           });
           
-          if (!response.ok) throw new Error('更新笔记失败');
+          if (!response.ok) throw new Error('更新公告失败');
           
-          Message.success('笔记更新成功');
-          fetchNotes(pagination.current, pagination.pageSize);
+          Message.success('公告更新成功');
+          fetchAnnouncements(pagination.current, pagination.pageSize);
         } catch (error) {
           Message.error(error.message);
         }
-      }
+      },
+      onCancel: () => setCurrentAnnouncement(null)
     });
   };
 
   const handleDelete = async (record) => {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除笔记"${record.title}"吗?`,
+      content: `确定要删除公告"${record.title}"吗?`,
       okText: '确认',
       cancelText: '取消',
       onOk: async () => {
         try {
-          const response = await fetch(`http://localhost:3002/api/notes/${record.id}`, {
+          const response = await fetch(`http://localhost:3002/api/announcements/${record.id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
           
-          if (!response.ok) throw new Error('删除笔记失败');
+          if (!response.ok) throw new Error('删除公告失败');
           
-          Message.success('笔记删除成功');
-          fetchNotes(pagination.current, pagination.pageSize);
+          Message.success('公告删除成功');
+          fetchAnnouncements(pagination.current, pagination.pageSize);
         } catch (error) {
           Message.error(error.message);
         }
@@ -231,12 +215,12 @@ const NoteManagement = () => {
   };
 
   return (
-    <div className="note-management-container">
-      <div className="note-management-header" style={{ marginBottom: 16 }}>
+    <div className="cement-management-container">
+      <div className="cement-management-header" style={{ marginBottom: 16 }}>
         <Space>
           <Input
             allowClear
-            placeholder="搜索作者ID"
+            placeholder="搜索标题"
             value={searchText}
             onChange={setSearchText}
             style={{ width: 300 }}
@@ -244,6 +228,54 @@ const NoteManagement = () => {
           <Button type="primary" icon={<IconSearch />} onClick={handleSearch}>
             搜索
           </Button>
+          <Button type="primary" onClick={() => {
+            setIsEditing(false);
+            setCurrentAnnouncement({ title: '', content: '' });
+          }}>添加公告</Button>
+          
+          <Modal
+            title="创建公告"
+            visible={!!currentAnnouncement && !isEditing}
+            onOk={async () => {
+              try {
+                const response = await fetch('http://localhost:3002/api/admin/announcements', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  },
+                  body: JSON.stringify({
+                    title: currentAnnouncement.title,
+                    content: currentAnnouncement.content
+                  })
+                });
+                
+                if (!response.ok) throw new Error('创建公告失败');
+                
+                Message.success('公告创建成功');
+                setCurrentAnnouncement(null);
+                fetchAnnouncements(pagination.current, pagination.pageSize);
+              } catch (error) {
+                Message.error(error.message);
+              }
+            }}
+            onCancel={() => setCurrentAnnouncement(null)}
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Input 
+                placeholder="标题"
+                value={currentAnnouncement?.title || ''}
+                onChange={(value) => setCurrentAnnouncement({...currentAnnouncement, title: value})}
+              />
+              <Input.TextArea 
+                placeholder="内容"
+                value={currentAnnouncement?.content || ''}
+                onChange={(value) => setCurrentAnnouncement({...currentAnnouncement, content: value})}
+                autoSize={{ minRows: 4, maxRows: 8 }}
+              />
+            </Space>
+          </Modal>
+       
         </Space>
       </div>
       
@@ -251,11 +283,11 @@ const NoteManagement = () => {
       <Table
         loading={loading}
         columns={columns}
-        data={notes}
+        data={announcements}
         rowKey="id"
         border={false}
         pagination={{
-          total: notes.length,
+          total: announcements.length,
           pageSize: 10,
           showTotal: true,
         }}
@@ -264,4 +296,4 @@ const NoteManagement = () => {
   );
 };
 
-export default NoteManagement;
+export default CementManagement;
