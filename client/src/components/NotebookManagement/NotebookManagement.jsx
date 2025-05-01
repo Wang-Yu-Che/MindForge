@@ -244,7 +244,7 @@ const NotebookManagement = () => {
           </div>
         )}
       </Modal>
-      <div className="notebook-management-header">
+      <div className="notebook-management-header" style={{ marginBottom: 16 }}>
         <Space>
           <Input
             allowClear

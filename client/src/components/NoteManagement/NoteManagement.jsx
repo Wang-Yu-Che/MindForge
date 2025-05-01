@@ -232,7 +232,7 @@ const NoteManagement = () => {
 
   return (
     <div className="note-management-container">
-      <div className="note-management-header">
+      <div className="note-management-header" style={{ marginBottom: 16 }}>
         <Space>
           <Input
             allowClear
@@ -246,6 +246,7 @@ const NoteManagement = () => {
           </Button>
         </Space>
       </div>
+      
 
       <Table
         loading={loading}

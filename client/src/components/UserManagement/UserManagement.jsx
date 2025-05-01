@@ -228,7 +228,7 @@ const UserManagement = () => {
         </Form>
       </Modal>
 
-      <div className="user-management-header">
+      <div className="user-management-header" style={{ marginBottom: 16 }}>
         <Space>
           <Input
             allowClear
