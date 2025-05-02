@@ -4,6 +4,7 @@ import './Header.css';
 import Feedback from '../Feedback/Feedback';
 import { useTheme } from '../../contexts/ThemeContext';
 import PunchCalendar from '../PunchCalendar/PunchCalendar';
+import TodoList from '../TodoList/TodoList';
 import { Modal } from '@arco-design/web-react';
 
 const Header = () => {
@@ -43,6 +44,7 @@ const Header = () => {
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('/default-avatar.svg');
   const [isPunchModalVisible, setIsPunchModalVisible] = useState(false);
+  const [isTodoModalVisible, setIsTodoModalVisible] = useState(false);
   const avatarRef = useRef(null);
 
   const { theme, toggleTheme } = useTheme();
@@ -204,6 +206,7 @@ const Header = () => {
                   我的笔记本
                 </NavLink>
                 </div>
+
                 <div>
                 <button 
                   className="settings-button" 
@@ -211,6 +214,15 @@ const Header = () => {
                  >
                   <i className="fas fa-calendar-check"></i>
                   ☀每日打卡☀
+                </button>
+                </div>
+                <div>
+                <button 
+                  className="settings-button" 
+                  onClick={() => setIsTodoModalVisible(true)}
+                 >
+                  <i className="fas fa-tasks"></i>
+                  📝待办事项
                 </button>
                 </div>
                 <div ref={settingsRef} style={{ position: 'relative' }}>
@@ -291,6 +303,15 @@ const Header = () => {
       <div style={{ transform: 'scale(0.65)',transformOrigin: 'top' }}>
         <PunchCalendar />
       </div>
+      </Modal>
+      <Modal
+        title="待办事项"
+        visible={isTodoModalVisible}
+        onCancel={() => setIsTodoModalVisible(false)}
+        footer={null}
+        style={{ width: 'auto', height: 'auto' }}
+      >
+        <TodoList />
       </Modal>
     </header>
   );

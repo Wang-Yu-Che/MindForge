@@ -16,6 +16,7 @@ export default function ForumPage() {
   const [posts, setPosts] = useState([]);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [visible, setVisible] = useState(false);
+  const [announcementVisible, setAnnouncementVisible] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -79,18 +80,20 @@ export default function ForumPage() {
         </Carousel>
         <div className="ccf-signup-box">
           <Title heading={5}>公告栏</Title>
-          {announcements.map(announcement => (
-            <div 
-              key={announcement.id}
-              className="announcement-item"
-              onClick={() => {
-                setSelectedAnnouncement(announcement);
-                setVisible(true);
-              }}
-            >
-              {announcement.title}
-            </div>
-          ))}
+          <div className="announcement-container">
+            {announcements.map(announcement => (
+              <div 
+                key={announcement.id}
+                className="announcement-item"
+                onClick={() => {
+                  setSelectedAnnouncement(announcement);
+                  setAnnouncementVisible(true);
+                }}
+              >
+                {announcement.title}
+              </div>
+            ))}
+          </div>
           <Modal
             style={{ wordBreak: 'break-all' }}
             title={selectedAnnouncement?.title}
@@ -126,6 +129,19 @@ export default function ForumPage() {
         <Row style={{ display: 'flex', justifyContent: 'center' }}>
         <Button type="primary" onClick={() => { setVisible(true);form.resetFields();}}>😊我也来一条😊</Button>
         </Row>
+
+      <Modal
+        style={{ wordBreak: 'break-all' }}
+        title={selectedAnnouncement?.title}
+        visible={announcementVisible}
+        onOk={() => setAnnouncementVisible(false)}
+        onCancel={() => setAnnouncementVisible(false)}
+        footer={null}
+      >
+        <div style={{ padding: '20px' }}>
+          {selectedAnnouncement?.content}
+        </div>
+      </Modal>
 
       <Modal
         title="创建新帖子"
