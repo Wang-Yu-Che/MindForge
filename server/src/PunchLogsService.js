@@ -46,7 +46,7 @@ export const getPunchRecords = async (userId) => {
   
       await connection.end();
   
-      const dates = rows.map(row => row.punch_date.toISOString().slice(0, 10));
+      const dates = rows.map(row => row.punch_date.toISOString());
       
       return ( dates)
     } catch (error) {

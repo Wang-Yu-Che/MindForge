@@ -15,6 +15,7 @@ import { createPost, getPosts, updatePost, deletePost, getPostsByPage, searchPos
 import fileUpload from 'express-fileupload';
 import { getAllStats } from './getAllStats.js';
 import { handlePunch,getPunchRecords} from './PunchLogsService.js';
+import { createEvent, getEventsByUserId, deleteEvent } from './eventsService.js';
 
 const app = express();
 app.use(cors());
@@ -45,6 +46,41 @@ app.put('/api/admin/reset-password', async (req, res) => {
 // 应用认证中间件到所有路由，除了白名单路径
 app.use(authMiddleware);
 
+// 日程管理路由
+app.post('/api/events', async (req, res) => {
+  try {
+    const { userId, date, schedule } = req.body;
+    console.log('创建日程请求:', { userId, date, schedule });
+    const eventId = await createEvent(userId, date, schedule);
+    res.json({ id: eventId });
+  } catch (error) {
+    console.error('创建日程失败:', error);
+    res.status(500).json({ error: '创建日程失败', message: error.message });
+  }
+});
+
+app.delete('/api/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteEvent(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('删除日程失败:', error);
+    res.status(500).json({ error: '删除日程失败', message: error.message });
+  }
+});
+
+app.get('/api/events/:user_id', async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const events = await getEventsByUserId(user_id);
+    res.json(events);
+  } catch (error) {
+    console.error('获取用户日程失败:', error);
+    res.status(500).json({ error: '获取用户日程失败', message: error.message });
+  }
+});
+
 // 打卡路由
 app.post('/api/punch/:id', async (req, res) => {
   try {
@@ -59,7 +95,6 @@ app.post('/api/punch/:id', async (req, res) => {
 app.get('/api/punch-records/:id', async (req, res) => {
   try {
     const result = await getPunchRecords(req.params.id);
-    //
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

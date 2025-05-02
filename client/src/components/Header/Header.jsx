@@ -203,7 +203,7 @@ const Header = () => {
                 <div>
                 <NavLink to="/note-book-list" className={({ isActive }) => isActive ? 'active' : ''}>
                   <i className="fas fa-comments"></i>
-                  我的笔记本
+                  我的知识库
                 </NavLink>
                 </div>
 
@@ -298,9 +298,10 @@ const Header = () => {
         visible={isPunchModalVisible}
         onCancel={() => setIsPunchModalVisible(false)}
         footer={null}
-        style={{ width: 'auto', height: '780px' }}
+        style={{ width: 'auto', height: 'auto' }}
+        maskClosable={false}
       >
-      <div style={{ transform: 'scale(0.65)',transformOrigin: 'top' }}>
+      <div>
         <PunchCalendar />
       </div>
       </Modal>
