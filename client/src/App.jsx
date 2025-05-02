@@ -55,7 +55,7 @@ function App() {
           <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />
           <Route path="/note-book-list" element={<PrivateRoute><NoteBookList /></PrivateRoute>} />
           <Route path="/forum" element={<PrivateRoute><ForumPage /></PrivateRoute>} />
-          <Route path="/detail" element={<PrivateRoute><DetailPage /></PrivateRoute>} />
+          <Route path="/detail/:id" element={<PrivateRoute><DetailPage /></PrivateRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </div>

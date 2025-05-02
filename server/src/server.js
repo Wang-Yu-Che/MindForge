@@ -10,8 +10,8 @@ import { uploadSourceFile, getUserSources,saveSourceFile, getSourcesByPage,delet
 import { createNotebook, getUserNotebooks as getNotebooks, updateNotebookTitle as updateNotebook, deleteNotebook, getNotebooksByPage } from './notebookService.js';
 import { createNote, getNotes, updateNote, deleteNote,getNotesByPage } from './notesService.js';
 import { createAnnouncement, getAnnouncements, updateAnnouncement, deleteAnnouncement, getAnnouncementsByPage,searchAnnouncementsByTitle } from './cementsService.js';
-import { createComment, getComments, updateComment, deleteComment, getCommentsByPage, searchCommentsByEmail} from './commentService.js';
-import { createPost, getPosts, updatePost, deletePost, getPostsByPage, searchPostsByEmail } from './forumPageService.js';
+import { createComment, getComments, updateComment, deleteComment, getCommentsByPage, searchCommentsByEmail,getCommentsByPostId} from './commentService.js';
+import { createPost, getPosts, updatePost, deletePost, getPostsByPage, searchPostsByEmail,getPostById,incrementLikeCount } from './forumPageService.js';
 import fileUpload from 'express-fileupload';
 import { getAllStats } from './getAllStats.js';
 import { handlePunch,getPunchRecords} from './PunchLogsService.js';
@@ -690,6 +690,41 @@ app.get('/api/admin/posts-email/:email', async (req, res) => {
   } catch (error) {
     console.error('搜索帖子失败:', error);
     res.status(500).json({ error: '搜索帖子失败', message: error.message });
+  }
+});
+
+// 点赞帖子
+app.put('/api/posts/like/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await incrementLikeCount(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('点赞失败:', error);
+    res.status(500).json({ error: '点赞失败', message: error.message });
+  }
+});
+
+// 根据帖子ID获取评论
+app.get('/api/posts/comments/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const comments = await getCommentsByPostId(postId);
+    res.json(comments);
+  } catch (error) {
+    console.error('获取评论失败:', error);
+    res.status(500).json({ error: '获取评论失败', message: error.message });
+  }
+});
+
+// 根据ID获取帖子
+app.get('/api/posts/:id', async (req, res) => {
+  try {
+    const post = await getPostById(req.params.id);
+    res.json(post);
+  } catch (error) {
+    console.error('获取帖子失败:', error);
+    res.status(500).json({ error: '获取帖子失败', message: error.message });
   }
 });
 

@@ -7,12 +7,19 @@ const dbConfig = dbConfigFromFile;
 const createComment = async (post_id, content, is_anonymous = false, user_email = null) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
+
     const query = `
       INSERT INTO forum_comments (post_id, content, is_anonymous, user_email, created_at)
       VALUES (?, ?, ?, ?, NOW())
     `;
+
+    //
     
     const [result] = await connection.execute(query, [post_id, content, is_anonymous, user_email]);
+    
+    // 更新帖子评论数
+    await connection.execute('UPDATE forum_posts SET comment_count = comment_count + 1 WHERE id = ?', [post_id]);
+    
     await connection.end();
     return result.insertId;
   } catch (error) {
@@ -128,4 +135,19 @@ const searchCommentsByEmail = async (email, page = 1, pageSize = 10) => {
   }
 };
 
-export { createComment, getComments, updateComment, deleteComment, getCommentsByPage, searchCommentsByEmail };
+// 根据帖子ID获取评论
+const getCommentsByPostId = async (postId) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const query = 'SELECT * FROM forum_comments WHERE post_id = ? ORDER BY created_at DESC';
+    
+    const [rows] = await connection.execute(query, [postId]);
+    await connection.end();
+    return rows;
+  } catch (error) {
+    console.error('根据帖子ID获取评论失败:', error);
+    throw error;
+  }
+};
+
+export { createComment, getComments, updateComment, deleteComment, getCommentsByPage, searchCommentsByEmail, getCommentsByPostId };

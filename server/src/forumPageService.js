@@ -4,7 +4,7 @@ import { dbConfig as dbConfigFromFile } from './config.js';
 const dbConfig = dbConfigFromFile;
 
 // 创建帖子
-const createPost = async (title, content, image_url, created_by) => {
+const createPost = async (title, content, image_url = "https://mind-forge-server.oss-cn-beijing.aliyuncs.com/show/%E7%82%B9%E5%87%BB%E6%9F%A5%E7%9C%8B.png", created_by) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
     const query = `
@@ -37,7 +37,7 @@ const getPosts = async () => {
 };
 
 // 更新帖子
-const updatePost = async (id, title, content, image_url) => {
+const updatePost = async (id, title, content, image_url = "https://mind-forge-server.oss-cn-beijing.aliyuncs.com/show/%E7%82%B9%E5%87%BB%E6%9F%A5%E7%9C%8B.png") => {
   try {
     const connection = await mysql.createConnection(dbConfig);
     const query = 'UPDATE forum_posts SET title = ?, content = ?, image_url = ?, updated_at = NOW() WHERE id = ?';
@@ -60,9 +60,12 @@ const updatePost = async (id, title, content, image_url) => {
 const deletePost = async (id) => {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    const query = 'DELETE FROM forum_posts WHERE id = ?';
     
-    const [result] = await connection.execute(query, [id]);
+    // 先删除关联的评论
+    await connection.execute('DELETE FROM forum_comments WHERE post_id = ?', [id]);
+    
+    // 再删除帖子
+    const [result] = await connection.execute('DELETE FROM forum_posts WHERE id = ?', [id]);
     await connection.end();
     
     if (result.affectedRows === 0) {
@@ -128,4 +131,44 @@ const searchPostsByEmail = async (email, page = 1, pageSize = 10) => {
   }
 };
 
-export { createPost, getPosts, updatePost, deletePost, getPostsByPage, searchPostsByEmail };
+// 根据ID获取帖子
+const getPostById = async (id) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const query = 'SELECT * FROM forum_posts WHERE id = ?';
+    
+    const [rows] = await connection.execute(query, [id]);
+    await connection.end();
+    
+    if (rows.length === 0) {
+      throw new Error('帖子不存在');
+    }
+    
+    return rows[0];
+  } catch (error) {
+    console.error('获取帖子失败:', error);
+    throw error;
+  }
+};
+
+// 增加点赞数
+const incrementLikeCount = async (id) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const query = 'UPDATE forum_posts SET like_count = like_count + 1 WHERE id = ?';
+    
+    const [result] = await connection.execute(query, [id]);
+    await connection.end();
+    
+    if (result.affectedRows === 0) {
+      throw new Error('帖子不存在');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('增加点赞数失败:', error);
+    throw error;
+  }
+};
+
+export { createPost, getPosts, updatePost, deletePost, getPostsByPage, searchPostsByEmail, getPostById, incrementLikeCount };
