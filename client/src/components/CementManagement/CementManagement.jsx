@@ -287,9 +287,11 @@ const CementManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: announcements.length,
-          pageSize: 10,
+          total: pagination.total,
+          pageSize: pagination.pageSize,
           showTotal: true,
+          current: pagination.current,
+          onChange: (page, pageSize) => fetchAnnouncements(page, pageSize)
         }}
       />
     </div>

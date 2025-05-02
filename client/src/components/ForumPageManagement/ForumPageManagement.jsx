@@ -237,9 +237,11 @@ const ForumPageManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: posts.length,
-          pageSize: 10,
+          total: pagination.total,
+          pageSize: pagination.pageSize,
           showTotal: true,
+          current: pagination.current,
+          onChange: (current, pageSize) => fetchPosts(current, pageSize)
         }}
       />
 

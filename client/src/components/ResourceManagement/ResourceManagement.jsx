@@ -184,9 +184,11 @@ const ResourceManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: resources.length,
-          pageSize: 10,
+          total: pagination.total,
+          pageSize: pagination.pageSize,
           showTotal: true,
+          current: pagination.current,
+          onChange: (page, pageSize) => fetchResources(page, pageSize)
         }}
       />
     </div>

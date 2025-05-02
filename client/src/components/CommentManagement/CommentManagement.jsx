@@ -239,9 +239,11 @@ const CommentManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: comments.length,
-          pageSize: 10,
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
           showTotal: true,
+          onChange: (page, pageSize) => fetchComments(page, pageSize)
         }}
       />
     </div>

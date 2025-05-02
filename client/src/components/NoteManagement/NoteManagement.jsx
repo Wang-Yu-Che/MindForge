@@ -255,9 +255,11 @@ const NoteManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: notes.length,
-          pageSize: 10,
+          total: pagination.total,
+          pageSize: pagination.pageSize,
           showTotal: true,
+          current: pagination.current,
+          onChange: (page, pageSize) => fetchNotes(page, pageSize)
         }}
       />
     </div>

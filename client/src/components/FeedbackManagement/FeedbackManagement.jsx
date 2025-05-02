@@ -33,7 +33,7 @@ const FeedbackManagement = () => {
       setFeedbacks(data.data || []);
       setPagination({
         ...pagination,
-        total: data.data?.length || 0
+        total: data.total || 0
       });
     } catch (error) {
       setError(error.message);
@@ -199,9 +199,11 @@ const FeedbackManagement = () => {
         rowKey="id"
         border={false}
         pagination={{
-          total: feedbacks?.length || 0,
-          pageSize: 10,
+          total: pagination.total,
+          pageSize: pagination.pageSize,
           showTotal: true,
+          current: pagination.current,
+          onChange: (page, pageSize) => fetchFeedbacks(page, pageSize)
         }}
       />
 
