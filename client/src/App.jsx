@@ -46,10 +46,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/admin/login" element={<AdminLogin />} />
         
-           <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/notes" element={<NoteManagement />} />
           <Route path="/admin/resources" element={<ResourceManagement />} />
-          <Route path="/admin/dashboard/*" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+          <Route path="/admin/dashboard/*" element={<PrivateRoute adminOnly><AdminDashboard /></PrivateRoute>} />
           <Route path="/welcome" element={<PrivateRoute><Welcome /></PrivateRoute>} />
           <Route path="/notebook" element={<PrivateRoute><Notebook /></PrivateRoute>} />
           <Route path="/demo-notebook" element={<PrivateRoute><DemoNotebook /></PrivateRoute>} />

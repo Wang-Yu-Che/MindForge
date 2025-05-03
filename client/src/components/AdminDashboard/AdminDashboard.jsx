@@ -91,9 +91,16 @@ const AdminDashboard = () => {
     { key: 'notes', icon: <IconApps />, label: '笔记管理' },
     { key: 'resources', icon: <IconFile />, label: '资源管理' },
     { key: 'feedback', icon: <IconFile />, label: '用户反馈' },
-    { key: 'cement', icon: <IconFile />, label: '公告管理' },
-    { key: 'comment', icon: <IconFile />, label: '评论管理' },
-    { key: 'forum', icon: <IconFile />, label: '帖子管理' }
+    {
+      key: 'main',
+      icon: <IconFile />,
+      label: '论坛管理',
+      children: [
+        { key: 'cement', icon: <IconFile />, label: '公告管理' },
+        { key: 'comment', icon: <IconFile />, label: '评论管理' },
+        { key: 'forum', icon: <IconFile />, label: '帖子管理' }
+      ]
+    }
   ];
 
   const COLORS = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'];
@@ -108,9 +115,17 @@ const AdminDashboard = () => {
           style={{ height: 'calc(100% - 64px)', borderRight: 0 }}
         >
           {menuItems.map(item => (
-            <Menu.Item key={item.key} icon={item.icon}>
-              {item.label}
-            </Menu.Item>
+            item.children ? (
+              <Menu.SubMenu key={item.key} title={item.label} icon={item.icon}>
+                {item.children.map(child => (
+                  <Menu.Item key={child.key}>{child.label}</Menu.Item>
+                ))}
+              </Menu.SubMenu>
+            ) : (
+              <Menu.Item key={item.key} icon={item.icon}>
+                {item.label}
+              </Menu.Item>
+            )
           ))}
         </Menu>
       </Sider>

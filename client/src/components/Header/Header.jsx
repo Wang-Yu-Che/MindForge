@@ -5,6 +5,7 @@ import Feedback from '../Feedback/Feedback';
 import { useTheme } from '../../contexts/ThemeContext';
 import PunchCalendar from '../PunchCalendar/PunchCalendar';
 import TodoList from '../TodoList/TodoList';
+import OcrComponent from '../OCR/OCR';
 import { Modal } from '@arco-design/web-react';
 
 const Header = () => {
@@ -45,6 +46,7 @@ const Header = () => {
   const [avatarUrl, setAvatarUrl] = useState('/default-avatar.svg');
   const [isPunchModalVisible, setIsPunchModalVisible] = useState(false);
   const [isTodoModalVisible, setIsTodoModalVisible] = useState(false);
+  const [isOcrModalVisible, setIsOcrModalVisible] = useState(false);
   const avatarRef = useRef(null);
 
   const { theme, toggleTheme } = useTheme();
@@ -225,6 +227,15 @@ const Header = () => {
                   📝待办事项
                 </button>
                 </div>
+                <div>
+                <button 
+                  className="settings-button" 
+                  onClick={() => setIsOcrModalVisible(true)}
+                 >
+                  <i className="fas fa-tasks"></i>
+                  图片OCR
+                </button>
+                </div>
                 <div ref={settingsRef} style={{ position: 'relative' }}>
                   <button className="settings-button" onClick={handleSettingsClick}>
                     <i className="fas fa-cog"></i>
@@ -313,6 +324,15 @@ const Header = () => {
         style={{ width: 'auto', height: 'auto' }}
       >
         <TodoList />
+      </Modal>
+      <Modal
+        title="图片OCR识别"
+        visible={isOcrModalVisible}
+        onCancel={() => setIsOcrModalVisible(false)}
+        footer={null}
+        style={{ width: 'auto', height: 'auto' }}
+      >
+        <OcrComponent />
       </Modal>
     </header>
   );
