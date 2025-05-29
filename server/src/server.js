@@ -425,8 +425,7 @@ app.post('/api/auth', async (req, res) => {
     const { email, password, action } = req.body;
     
     if (action === 'register') {
-      const userId = await registerUser(email, password);
-      const token = jwt.sign({ userId }, jwtConfig.secretKey, { expiresIn: jwtConfig.expiresIn });
+      const { userId, token } = await registerUser(email, password);
       res.json({ token, userId });
     } else if (action === 'login') {
       const { userId, token } = await loginUser(email, password);

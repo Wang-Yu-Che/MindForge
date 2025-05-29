@@ -1,0 +1,65 @@
+# 用户认证路由
+PUT /api/admin/reset-password
+POST /api/auth
+POST /api/auth/change-password
+
+# 日程管理路由
+POST /api/events
+DELETE /api/events/:id
+GET /api/events/:user_id
+
+# 打卡路由
+POST /api/punch/:id
+GET /api/punch-records/:id
+
+# 公告管理路由
+POST /api/admin/announcements
+GET /api/announcements
+GET /api/admin/announcements
+GET /api/admin/announcements-title/:keyword
+PUT /api/admin/announcements/:id
+DELETE /api/admin/announcements/:id
+
+# 聊天路由
+POST /api/chat
+POST /api/chat/simple
+GET /api/chat/:slug/history
+
+# 文件上传路由
+POST /api/upload-to-oss
+POST /api/sources/upload
+
+# 反馈路由
+POST /api/feedback
+GET /api/admin/feedbacks
+GET /api/admin/feedbacks/:id
+DELETE /api/admin/feedbacks/:id
+
+# 笔记本管理路由
+POST /api/notebooks
+GET /api/notebooks
+GET /api/admin/notebooks-id/:id
+GET /api/admin/notebooks
+
+# 笔记路由
+GET /api/admin/notes
+
+# 论坛帖子管理路由
+POST /api/admin/posts
+GET /api/admin/posts
+PUT /api/admin/posts/:id
+DELETE /api/admin/posts/:id
+GET /api/admin/posts/:id
+POST /api/admin/posts/:id/like
+
+# 源文件管理路由
+GET /api/admin/sources
+GET /api/admin/sources-name/:key
+GET /api/admin/user-sources
+GET /api/sources
+
+# 统计数据路由
+GET /api/admin/stats
+
+# 数据导入路由
+POST /api/notes/import
